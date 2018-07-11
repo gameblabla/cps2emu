@@ -1,5 +1,12 @@
 *.o
 *.elf
 *.dge
+*.sh
 *.zip
 *.cache
+roms/
+cache/
+config/
+romconv/*.o
+src/*.o
+src/cps2/*.o

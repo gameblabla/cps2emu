@@ -140,31 +140,31 @@ int file_getc(void)
 --------------------------------------------------------*/
 
 #if USE_CACHE
-int cachefile_open(void)
+FILE* cachefile_open(void)
 {
 	char path[MAX_PATH];
-	int cache_fd;
+	FILE* cache_fd;
 
 	sprintf(path, "%s/%s.cache", cache_dir, game_name);
-	if ((cache_fd = open(path, O_RDONLY | O_BINARY)) >= 0)
+	if ((cache_fd = fopen(path, "rb")) >= 0)
 		return cache_fd;
 
 	sprintf(path, "%s/%s.cache", game_dir, game_name);
-	if ((cache_fd = open(path, O_RDONLY | O_BINARY)) >= 0)
+	if ((cache_fd = fopen(path, "rb")) >= 0)
 		return cache_fd;
 
 	if (!cache_parent_name[0])
-		return -1;
+		return NULL;
 
 	sprintf(path, "%s/%s.cache", cache_dir, cache_parent_name);
-	if ((cache_fd = open(path, O_RDONLY | O_BINARY)) >= 0)
+	if ((cache_fd = fopen(path, "rb")) >= 0)
 		return cache_fd;
 
 	sprintf(path, "%s/%s.cache", game_dir, cache_parent_name);
-	if ((cache_fd = open(path, O_RDONLY | O_BINARY)) >= 0)
+	if ((cache_fd = fopen(path, "rb")) >= 0)
 		return cache_fd;
 
-	return -1;
+	return NULL;
 }
 #endif
 

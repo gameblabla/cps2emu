@@ -228,7 +228,8 @@ static int load_rom_cpu2(void)
 
 static int load_rom_gfx1(void)
 {
-	int fd, found = 0;
+	FILE* fd;
+	int found = 0;
 
 	msg_printf("Loading cache information data...\n");
 
@@ -263,20 +264,20 @@ static int load_rom_gfx1(void)
 	{
 		char version_str[8];
 
-		read(fd, version_str, 8);
+		fread(version_str, sizeof(char), 8, fd);
 
 		if (strcmp(version_str, "CPS2XC0") == 0)
 		{
-			read(fd, &block_start, 4);
-			read(fd, &block_size, 4);
-			read(fd, &block_capacity, 4);
-			read(fd, block_offset, 0x200 * sizeof(u32));
-			read(fd, gfx_pen_usage[TILE08], gfx_total_elements[TILE08]);
-			read(fd, gfx_pen_usage[TILE16], gfx_total_elements[TILE16]);
-			read(fd, gfx_pen_usage[TILE32], gfx_total_elements[TILE32]);
+			fread(&block_start, sizeof(char),  4, fd);
+			fread(&block_size, sizeof(char),  4, fd);
+			fread(&block_capacity, sizeof(char), 4, fd);
+			fread(block_offset, sizeof(char),  0x200 * sizeof(u32), fd);
+			fread(gfx_pen_usage[TILE08], sizeof(char), gfx_total_elements[TILE08], fd);
+			fread(gfx_pen_usage[TILE16], sizeof(char), gfx_total_elements[TILE16], fd);
+			fread(gfx_pen_usage[TILE32], sizeof(char), gfx_total_elements[TILE32], fd);
 			found = 1;
 		}
-		close(fd);
+		fclose(fd);
 	}
 
 	if (!found)

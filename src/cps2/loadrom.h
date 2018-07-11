@@ -32,7 +32,7 @@ void file_close(void);
 int  file_read(void *buf, size_t length);
 int  file_getc(void);
 #ifdef USE_CACHE
-int  cachefile_open(void);
+FILE*  cachefile_open(void);
 #endif
 int rom_load(struct rom_t *rom, u8 *mem, int idx, int max);
 

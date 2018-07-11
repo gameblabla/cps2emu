@@ -1,0 +1,36 @@
+#
+# Makefile for Linux
+# It's mostly for conveniance and also so i don't have to recompile SDL2 each time.
+#
+
+CC = gcc
+CXX = g++
+
+
+OUTPUTNAME = romconv.elf
+
+INCLUDES = -I
+
+OPT_FLAGS  = -O2
+
+CFLAGS = $(DEFINES) $(INCLUDES) $(OPT_FLAGS) -std=gnu99
+CXXFLAGS = $(DEFINES) $(INCLUDES) $(OPT_FLAGS) -std=gnu++98
+LDFLAGS = -lm -pthread -ldl -lstdc++ -lz
+
+# Redream (main engine)
+OBJS =  \
+romconv/romcnv.o romconv/unzip.o romconv/zfile.o
+ 
+.c.o:
+	$(CC) $(CFLAGS) -c -o $@ $< 
+	
+.cpp.o:
+	$(CXX) $(CXXFLAGS) -c -o $@ $< 
+	
+all: executable
+
+executable : $(OBJS)
+	$(CC) -o $(OUTPUTNAME) $(OBJS) $(CFLAGS) $(LDFLAGS)
+
+clean:
+	rm $(OBJS) $(OUTPUTNAME)

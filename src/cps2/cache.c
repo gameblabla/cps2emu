@@ -58,7 +58,7 @@ static cache_t *tail;
 static int num_cache;
 static u16 ALIGN_DATA blocks[MAX_CACHE_BLOCKS];
 static char spr_cache_name[MAX_PATH];
-static int cache_fd;
+static FILE* cache_fd;
 
 
 /******************************************************************************
@@ -112,9 +112,11 @@ static int fill_cache(void)
     
     msg_printf("Loading cache data... \n");
 
-    lseek(cache_fd, block_start, SEEK_SET);
-    read(cache_fd, block_data, block_size);
-    
+    //lseek(cache_fd, block_start, SEEK_SET);
+    //read(cache_fd, block_data, block_size);
+    fseek(cache_fd, block_start, SEEK_SET);
+    fread(block_data, sizeof(char), block_size, cache_fd);
+     
     msg_printf("Fill cache data... 0%%\n");
 
 	while (i < num_cache)
@@ -247,7 +249,7 @@ void cache_init(void)
 	int i;
 
 	num_cache  = 0;
-	cache_fd   = -1;
+	cache_fd   = NULL;
 	cache_type = CACHE_NOTFOUND;
 
 	read_cache = read_cache_static;
@@ -322,10 +324,10 @@ int cache_start(void)
 		return 0;
 	}
 
-	if (cache_fd != -1)
+	if (cache_fd != NULL)
 	{
-		close(cache_fd);
-		cache_fd = -1;
+		fclose(cache_fd);
+		cache_fd = NULL;
 	}
 
 	msg_printf("Cache setup complete.\n");
