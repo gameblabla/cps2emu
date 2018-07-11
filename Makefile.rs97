@@ -1,0 +1,47 @@
+#
+# Makefile for Linux
+# It's mostly for conveniance and also so i don't have to recompile SDL2 each time.
+#
+
+CHAINPREFIX=/opt/rs97-toolchain
+CROSS_COMPILE=$(CHAINPREFIX)/usr/bin/mipsel-linux-
+CC = $(CROSS_COMPILE)gcc
+CXX = $(CROSS_COMPILE)g++
+STRIP = $(CROSS_COMPILE)strip
+SYSROOT     := $(CHAINPREFIX)/usr/mipsel-buildroot-linux-uclibc/sysroot
+SDL_CFLAGS  := $(shell $(SYSROOT)/usr/bin/sdl-config --cflags)
+SDL_LIBS    := $(shell $(SYSROOT)/usr/bin/sdl-config --libs)
+
+OUTPUTNAME = cps2emu.dge
+
+DEFINES = -DSDL
+INCLUDES = -I. -Isrc -Isrc/cps2 $(SDL_CFLAGS)
+
+OPT_FLAGS  = -O0 -mips32 -DOSS_SOUND -DFAME
+
+CFLAGS = $(DEFINES) $(INCLUDES) $(OPT_FLAGS) -std=gnu99
+CXXFLAGS = $(DEFINES) $(INCLUDES) $(OPT_FLAGS) -std=gnu++98
+LDFLAGS = $(SDL_LIBS) -lm -pthread -ldl -lstdc++ -lz
+
+# Redream (main engine)
+OBJS =  \
+src/emumain.o src/emudraw.o src/usbjoy.o src/font.o src/zip/unzip.o src/zip/zfile.o \
+src/sound/qsound.o src/sound/sndintrf.o src/cps2/cache.o src/cps2/cps2.o src/cps2/cps2crpt.o \
+src/cps2/driver.o src/cps2/eeprom.o src/cps2/inptport.o src/cps2/memintrf.o src/cps2/sprite.o src/cps2/state.o src/cps2/timer.o \
+src/cps2/vidhrdw.o src/cps2/loadrom.o src/cps2/coin.o src/cps2/hiscore.o \
+src/cpu/fame/famec.o src/cpu/fame/m68000.o \
+src/cpu/z80/cz80.o src/cpu/z80/z80.o
+ 
+.c.o:
+	$(CC) $(CFLAGS) -c -o $@ $< 
+	
+.cpp.o:
+	$(CXX) $(CXXFLAGS) -c -o $@ $< 
+	
+all: executable
+
+executable : $(OBJS)
+	$(CC) -o $(OUTPUTNAME) $(OBJS) $(CFLAGS) $(LDFLAGS)
+
+clean:
+	rm $(OBJS) $(OUTPUTNAME)

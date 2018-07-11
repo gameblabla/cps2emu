@@ -1,0 +1,42 @@
+#
+# Makefile for Linux
+# It's mostly for conveniance and also so i don't have to recompile SDL2 each time.
+#
+
+CHAINPREFIX=/opt/rs97-toolchain
+CROSS_COMPILE=$(CHAINPREFIX)/usr/bin/mipsel-linux-
+CC = $(CROSS_COMPILE)gcc
+CXX = $(CROSS_COMPILE)g++
+STRIP = $(CROSS_COMPILE)strip
+SYSROOT     := $(CHAINPREFIX)/usr/mipsel-buildroot-linux-uclibc/sysroot
+SDL_CFLAGS  := $(shell $(SYSROOT)/usr/bin/sdl-config --cflags)
+SDL_LIBS    := $(shell $(SYSROOT)/usr/bin/sdl-config --libs)
+
+OUTPUTNAME = romconv.dge
+
+DEFINES = -DSDL
+INCLUDES = -I. -Isrc -Isrc/cps2 $(SDL_CFLAGS)
+
+OPT_FLAGS  = -O2 -mips32 
+
+CFLAGS = $(DEFINES) $(INCLUDES) $(OPT_FLAGS) -std=gnu99
+CXXFLAGS = $(DEFINES) $(INCLUDES) $(OPT_FLAGS) -std=gnu++98
+LDFLAGS = $(SDL_LIBS) -lm -pthread -ldl -lstdc++ -lz
+
+# Redream (main engine)
+OBJS =  \
+romconv/romcnv.o romconv/unzip.o romconv/zfile.o
+ 
+.c.o:
+	$(CC) $(CFLAGS) -c -o $@ $< 
+	
+.cpp.o:
+	$(CXX) $(CXXFLAGS) -c -o $@ $< 
+	
+all: executable
+
+executable : $(OBJS)
+	$(CC) -o $(OUTPUTNAME) $(OBJS) $(CFLAGS) $(LDFLAGS)
+
+clean:
+	rm $(OBJS) $(OUTPUTNAME)
