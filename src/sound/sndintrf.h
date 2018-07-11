@@ -19,7 +19,7 @@
 }
 
 #ifdef OSS_SOUND
-extern FILE* sound_fd;
+extern int sound_fd;
 #endif
 
 enum
