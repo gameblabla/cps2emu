@@ -1,17 +1,23 @@
 /******************************************************************************
 
-	m68000.c
+	m68000.h
 
-	M68000 CPUインタフェース関数
+	M68000 CPU interface
 
 ******************************************************************************/
+
+#if !defined(N900) && !defined(M68K) && !defined(FAME)
 
 #ifndef M68000_H
 #define M68000_H
 
 #include "c68k.h"
 
-// MAME互換のレジスタ番号 (一部未対応)
+extern int c68k_remaining_cycles;
+
+#define m68k_ICount   c68k_remaining_cycles
+#define m68000_ICount c68k_remaining_cycles
+
 enum
 {
 	/* NOTE: M68K_SP fetches the current SP, be it USP, ISP, or MSP */
@@ -24,18 +30,11 @@ enum
 void m68000_init(void);
 void m68000_reset(void);
 void m68000_exit(void);
-int  m68000_execute(int cycles);
-#if (EMU_SYSTEM == NCDZ)
-void m68000_execute2(UINT32 start_pc, UINT32 break_point);
-#endif
+int m68000_execute(int cycles);
 void m68000_set_irq_line(int irqline, int state);
 void m68000_set_irq_callback(int (*callback)(int irqline));
-UINT32  m68000_get_reg(int regnum);
-void m68000_set_reg(int regnum, UINT32 val);
 
-#if (EMU_SYSTEM == CPS2)
-void m68000_set_encrypted_range(UINT32 start, UINT32 end, void *decrypted_rom);
-#endif
+void m68000_set_encrypted_range(u32 start, u32 end, void *decrypted_rom);
 
 #ifdef SAVE_STATE
 STATE_SAVE( m68000 );
@@ -43,3 +42,5 @@ STATE_LOAD( m68000 );
 #endif
 
 #endif /* M68000_H */
+
+#endif // !GP2X && !M68K

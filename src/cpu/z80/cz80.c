@@ -1,17 +1,19 @@
-/********************************************************************************/
-/*                                                                              */
-/* CZ80 (Z80 CPU emulator) version 0.9                                          */
-/* Compiled with Dev-C++                                                        */
-/* Copyright 2004-2005 St—Èhane Dallongeville                                   */
-/*                                                                              */
-/********************************************************************************/
-
-#ifndef GP2X
+/******************************************************************************
+ *
+ * CZ80 (Z80 CPU emulator) version 0.9
+ * Compiled with Dev-C++
+ * Copyright 2004-2005 StÈphane Dallongeville
+ *
+ * (Modified by NJ)
+ *
+ *****************************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "emumain.h"
 #include "cz80.h"
+
 
 #define CF					0x01
 #define NF					0x02
@@ -23,43 +25,79 @@
 #define ZF					0x40
 #define SF					0x80
 
-// include macro file
-//////////////////////
+
+/******************************************************************************
+	É}ÉNÉç
+******************************************************************************/
 
 #include "cz80macro.h"
 
-// shared global variable
-//////////////////////////
 
-cz80_struc CZ80;
-int z80_ICount;
-static int z80_ExtraCycles;
+/******************************************************************************
+	ÉOÉçÅ[ÉoÉãç\ë¢ëÃ
+******************************************************************************/
 
-static u8 *pzR8[8];
-static union16 *pzR16[4];
+cz80_struc ALIGN_DATA CZ80;
 
-static u8 SZ[256];            // zero and sign flags
-static u8 SZP[256];           // zero, sign and parity flags
-static u8 SZ_BIT[256];        // zero, sign and parity/overflow (=zero) flags for BIT opcode
-static u8 SZHV_inc[256];      // zero, sign, half carry and overflow flags INC R8
-static u8 SZHV_dec[256];      // zero, sign, half carry and overflow flags DEC R8
+
+/******************************************************************************
+	ÉçÅ[ÉJÉãïœêî
+******************************************************************************/
+
+static UINT8 ALIGN_DATA cz80_bad_address[1 << CZ80_FETCH_SFT];
+
+static UINT8 ALIGN_DATA SZ[256];
+static UINT8 ALIGN_DATA SZP[256];
+static UINT8 ALIGN_DATA SZ_BIT[256];
+static UINT8 ALIGN_DATA SZHV_inc[256];
+static UINT8 ALIGN_DATA SZHV_dec[256];
 #if CZ80_BIG_FLAGS_ARRAY
-static u8 SZHVC_add[2*256*256];
-static u8 SZHVC_sub[2*256*256];
+static UINT8 ALIGN_DATA SZHVC_add[2*256*256];
+static UINT8 ALIGN_DATA SZHVC_sub[2*256*256];
 #endif
 
-// core main functions
-///////////////////////
+
+/******************************************************************************
+	ÉçÅ[ÉJÉãä÷êî
+******************************************************************************/
+
+/*--------------------------------------------------------
+	äÑÇËçûÇ›ÉRÅ[ÉãÉoÉbÉN
+--------------------------------------------------------*/
+
+static INT32 Cz80_Interrupt_Callback(INT32 line)
+{
+	return 0xff;
+}
+
+
+/******************************************************************************
+	CZ80ÉCÉìÉ^ÉtÉFÅ[ÉXä÷êî
+******************************************************************************/
+
+/*--------------------------------------------------------
+	CPUèâä˙âª
+--------------------------------------------------------*/
 
 void Cz80_Init(cz80_struc *CPU)
 {
-	u32 i, j, p;
+	UINT32 i, j, p;
 #if CZ80_BIG_FLAGS_ARRAY
 	int oldval, newval, val;
-	u8 *padd, *padc, *psub, *psbc;
+	UINT8 *padd, *padc, *psub, *psbc;
 #endif
 
 	memset(CPU, 0, sizeof(cz80_struc));
+
+	memset(cz80_bad_address, 0xff, sizeof(cz80_bad_address));
+
+	for (i = 0; i < CZ80_FETCH_BANK; i++)
+	{
+		CPU->Fetch[i] = (UINT32)cz80_bad_address;
+#if CZ80_ENCRYPTED_ROM
+		CPU->OPFetch[i] = 0;
+#endif
+	}
 
 	// flags tables initialisation
 	for (i = 0; i < 256; i++)
@@ -132,62 +170,72 @@ void Cz80_Init(cz80_struc *CPU)
 	}
 #endif
 
-	pzR8[0] = &zB;
-	pzR8[1] = &zC;
-	pzR8[2] = &zD;
-	pzR8[3] = &zE;
-	pzR8[4] = &zH;
-	pzR8[5] = &zL;
-	pzR8[6] = &zF;	// Ù•◊‚™Œ‘¥˘Íﬂæ£¨A™»Ï˝™ÏÙ™®
-	pzR8[7] = &zA;	// Ù•◊‚™Œ‘¥˘Íﬂæ£¨F™»Ï˝™ÏÙ™®
+	CPU->pzR8[0] = &zB;
+	CPU->pzR8[1] = &zC;
+	CPU->pzR8[2] = &zD;
+	CPU->pzR8[3] = &zE;
+	CPU->pzR8[4] = &zH;
+	CPU->pzR8[5] = &zL;
+	CPU->pzR8[6] = &zF;	// èàóùÇÃìsçáè„ÅAAÇ∆ì¸ÇÍë÷Ç¶
+	CPU->pzR8[7] = &zA;	// èàóùÇÃìsçáè„ÅAFÇ∆ì¸ÇÍë÷Ç¶
 
-	pzR16[0] = pzBC;
-	pzR16[1] = pzDE;
-	pzR16[2] = pzHL;
-	pzR16[3] = pzAF;
+	CPU->pzR16[0] = pzBC;
+	CPU->pzR16[1] = pzDE;
+	CPU->pzR16[2] = pzHL;
+	CPU->pzR16[3] = pzAF;
 
 	zIX = zIY = 0xffff;
 	zF = ZF;
+
+	CPU->Interrupt_Callback = Cz80_Interrupt_Callback;
 }
+
+
+/*--------------------------------------------------------
+	CPUÉäÉZÉbÉg
+--------------------------------------------------------*/
 
 void Cz80_Reset(cz80_struc *CPU)
 {
-	zI  = 0;
-	zR  = 0;
-	zR2 = 0;
-
-	z80_ICount = 0;
-	z80_ExtraCycles = 0;
-
-	Cz80_Set_PC(CPU, 0);
+	memset(CPU, 0, (INT32)&CPU->BasePC - (INT32)CPU);
+	Cz80_Set_Reg(CPU, CZ80_PC, 0);
 }
 
-s32 Cz80_Exec(cz80_struc *cpu, s32 cycles)
+
+/*--------------------------------------------------------
+	CPUé¿çs
+--------------------------------------------------------*/
+
+INT32 Cz80_Exec(cz80_struc *CPU, INT32 cycles)
 {
 #if CZ80_USE_JUMPTABLE
 #include "cz80jmp.c"
 #endif
 
-	cz80_struc *CPU;
-	u32 PC;
-	u32 Opcode;
-	u32 adr;
-	u32 res;
-	u32 val;
+	UINT32 PC;
+#if CZ80_ENCRYPTED_ROM
+	INT32 OPBase;
+#endif
+	UINT32 Opcode;
+	UINT32 adr = 0;
+	UINT32 res;
+	UINT32 val;
 	int afterEI = 0;
 
-	CPU = cpu;
 	PC = CPU->PC;
-	z80_ICount = cycles - z80_ExtraCycles;
-	z80_ExtraCycles = 0;
+#if CZ80_ENCRYPTED_ROM
+	OPBase = CPU->OPBase;
+#endif
+	CPU->ICount = cycles - CPU->ExtraCycles;
+	CPU->ExtraCycles = 0;
 
 	if (!CPU->HaltState)
 	{
 Cz80_Exec:
-		if (z80_ICount > 0)
+		if (CPU->ICount > 0)
 		{
 			union16 *data = pzHL;
-			Opcode = FETCH_BYTE;
+			Opcode = READ_OP();
 #if CZ80_EMULATE_R_EXACTLY
 			zR++;
 #endif
@@ -196,102 +244,215 @@ Cz80_Exec:
 
 		if (afterEI)
 		{
-			z80_ICount += z80_ExtraCycles;
-			z80_ExtraCycles = 0;
 			afterEI = 0;
 Cz80_Check_Interrupt:
 			CHECK_INT
 			goto Cz80_Exec;
 		}
 	}
-	else z80_ICount = 0;
+	else CPU->ICount = 0;
 
 Cz80_Exec_End:
 	CPU->PC = PC;
-	cycles -= z80_ICount;
-#if (CZ80_EMULATE_R_EXACTLY == 0)
+#if CZ80_ENCRYPTED_ROM
+	CPU->OPBase = OPBase;
+#endif
+	cycles -= CPU->ICount;
+#if !CZ80_EMULATE_R_EXACTLY
 	zR = (zR + (cycles >> 2)) & 0x7f;
 #endif
 
 	return cycles;
 }
 
-void Cz80_Set_IRQ(cz80_struc *CPU, s32 vector)
-{
-	u32 PC = CPU->PC;
 
-	CPU->IRQState = 1;
-	CHECK_INT
-	CPU->PC = PC;
+/*--------------------------------------------------------
+	äÑÇËçûÇ›èàóù
+--------------------------------------------------------*/
+
+void Cz80_Set_IRQ(cz80_struc *CPU, INT32 line, INT32 state)
+{
+	if (line == IRQ_LINE_NMI)
+	{
+		zIFF1 = 0;
+		CPU->ExtraCycles += 11;
+		CPU->HaltState = 0;
+		PUSH_16(CPU->PC - CPU->BasePC)
+		Cz80_Set_Reg(CPU, CZ80_PC, 0x66);
+	}
+	else
+	{
+		CPU->IRQState = state;
+
+		if (state != CLEAR_LINE)
+		{
+			UINT32 PC = CPU->PC;
+#if CZ80_ENCRYPTED_ROM
+			INT32 OPBase = CPU->OPBase;
+#endif
+
+			CPU->IRQLine = line;
+			CHECK_INT
+			CPU->PC = PC;
+#if CZ80_ENCRYPTED_ROM
+			CPU->OPBase = OPBase;
+#endif
+		}
+	}
 }
 
-void Cz80_Set_NMI(cz80_struc *CPU)
-{
-	zIFF1 = 0;
-	z80_ExtraCycles += 11;
-	CPU->IRQState = 0;
-	CPU->HaltState = 0;
 
-	PUSH_16(CPU->PC - CPU->BasePC)
-	Cz80_Set_PC(CPU, 0x66);
+/*--------------------------------------------------------
+	ÉåÉWÉXÉ^éÊìæ
+--------------------------------------------------------*/
+
+UINT32 Cz80_Get_Reg(cz80_struc *CPU, INT32 regnum)
+{
+	switch (regnum)
+	{
+	case CZ80_PC:   return (CPU->PC - CPU->BasePC);
+	case CZ80_SP:   return zSP;
+	case CZ80_AF:   return zAF;
+	case CZ80_BC:   return zBC;
+	case CZ80_DE:   return zDE;
+	case CZ80_HL:   return zHL;
+	case CZ80_IX:   return zIX;
+	case CZ80_IY:   return zIY;
+	case CZ80_AF2:  return zAF2;
+	case CZ80_BC2:  return zBC2;
+	case CZ80_DE2:  return zDE2;
+	case CZ80_HL2:  return zHL2;
+	case CZ80_R:    return zR;
+	case CZ80_I:    return zI;
+	case CZ80_IM:   return zIM;
+	case CZ80_IFF1: return zIFF1;
+	case CZ80_IFF2: return zIFF2;
+	case CZ80_HALT: return CPU->HaltState;
+	case CZ80_IRQ:  return CPU->IRQState;
+	default: return 0;
+	}
 }
 
-void Cz80_Clear_IRQ(cz80_struc *CPU)
+
+/*--------------------------------------------------------
+	ÉåÉWÉXÉ^ê›íË
+--------------------------------------------------------*/
+
+void Cz80_Set_Reg(cz80_struc *CPU, INT32 regnum, UINT32 val)
 {
-	CPU->IRQState = 0;
+	switch (regnum)
+	{
+	case CZ80_PC:
+		CPU->BasePC = CPU->Fetch[val >> CZ80_FETCH_SFT];
+#if CZ80_ENCRYPTED_ROM
+		CPU->OPBase = CPU->OPFetch[val >> CZ80_FETCH_SFT];
+#endif
+		CPU->PC = val + CPU->BasePC;
+		break;
+
+	case CZ80_SP:   zSP = val; break;
+	case CZ80_AF:   zAF = val; break;
+	case CZ80_BC:   zBC = val; break;
+	case CZ80_DE:   zDE = val; break;
+	case CZ80_HL:   zHL = val; break;
+	case CZ80_IX:   zIX = val; break;
+	case CZ80_IY:   zIY = val; break;
+	case CZ80_AF2:  zAF2 = val; break;
+	case CZ80_BC2:  zBC2 = val; break;
+	case CZ80_DE2:  zDE2 = val; break;
+	case CZ80_HL2:  zHL2 = val; break;
+	case CZ80_R:    zR = val; break;
+	case CZ80_I:    zI = val; break;
+	case CZ80_IM:   zIM = val; break;
+	case CZ80_IFF1: zIFF1 = val; break;
+	case CZ80_IFF2: zIFF2 = val; break;
+	case CZ80_HALT: CPU->HaltState = val; break;
+	case CZ80_IRQ:  CPU->IRQState = val; break;
+	default: break;
+	}
 }
 
-// setting core functions
-//////////////////////////
 
-void Cz80_Set_Fetch(cz80_struc *cpu, u32 low_adr, u32 high_adr, u32 fetch_adr)
+/*--------------------------------------------------------
+	ÉtÉFÉbÉ`ÉAÉhÉåÉXê›íË
+--------------------------------------------------------*/
+
+void Cz80_Set_Fetch(cz80_struc *CPU, UINT32 low_adr, UINT32 high_adr, UINT32 fetch_adr)
 {
-	u32 i, j;
+	int i, j;
 
 	i = low_adr >> CZ80_FETCH_SFT;
 	j = high_adr >> CZ80_FETCH_SFT;
 	fetch_adr -= i << CZ80_FETCH_SFT;
-	while (i <= j) cpu->Fetch[i++] = (u8 *)fetch_adr;
+
+	while (i <= j)
+	{
+		CPU->Fetch[i] = fetch_adr;
+#if CZ80_ENCRYPTED_ROM
+		CPU->OPFetch[i] = 0;
+#endif
+		i++;
+	}
 }
 
-void Cz80_Set_ReadB(cz80_struc *cpu, CZ80_READ8 *Func)
+
+/*--------------------------------------------------------
+	ÉtÉFÉbÉ`ÉAÉhÉåÉXê›íË (à√çÜâªROMëŒâû)
+--------------------------------------------------------*/
+
+#if CZ80_ENCRYPTED_ROM
+void Cz80_Set_Encrypt_Range(cz80_struc *CPU, UINT32 low_adr, UINT32 high_adr, UINT32 decrypted_rom)
 {
-	cpu->Read_Byte = Func;
-}
+	int i, j;
 
-void Cz80_Set_WriteB(cz80_struc *cpu, CZ80_WRITE8 *Func)
+	i = low_adr >> CZ80_FETCH_SFT;
+	j = high_adr >> CZ80_FETCH_SFT;
+	decrypted_rom -= i << CZ80_FETCH_SFT;
+
+	while (i <= j)
+	{
+		CPU->OPFetch[i] = (INT32)decrypted_rom - (INT32)CPU->Fetch[i];
+		i++;
+	}
+}
+#endif
+
+
+/*--------------------------------------------------------
+	ÉÅÉÇÉäÉäÅ[Éh/ÉâÉCÉgä÷êîê›íË
+--------------------------------------------------------*/
+
+void Cz80_Set_ReadB(cz80_struc *CPU, UINT8 (*Func)(UINT32 address))
 {
-	cpu->Write_Byte = Func;
+	CPU->Read_Byte = Func;
 }
 
-void Cz80_Set_INPort(cz80_struc *cpu, CZ80_READ8 *Func)
+void Cz80_Set_WriteB(cz80_struc *CPU, void (*Func)(UINT32 address, UINT8 data))
 {
-	cpu->IN_Port = Func;
+	CPU->Write_Byte = Func;
 }
 
-void Cz80_Set_OUTPort(cz80_struc *cpu, CZ80_WRITE8 *Func)
+
+/*--------------------------------------------------------
+	É|Å[ÉgÉäÅ[Éh/ÉâÉCÉgä÷êîê›íË
+--------------------------------------------------------*/
+
+void Cz80_Set_INPort(cz80_struc *CPU, UINT8 (*Func)(UINT16 port))
 {
-	cpu->OUT_Port = Func;
+	CPU->IN_Port = Func;
 }
 
-void Cz80_Set_IRQ_Callback(cz80_struc *cpu, CZ80_INT_CALLBACK *Func)
+void Cz80_Set_OUTPort(cz80_struc *CPU, void (*Func)(UINT16 port, UINT8 value))
 {
-	cpu->Interrupt_Ack = Func;
+	CPU->OUT_Port = Func;
 }
 
-// externals main functions
-////////////////////////////
 
-u32 Cz80_Get_PC(cz80_struc *CPU)
+/*--------------------------------------------------------
+	ÉRÅ[ÉãÉoÉbÉNä÷êîê›íË
+--------------------------------------------------------*/
+
+void Cz80_Set_IRQ_Callback(cz80_struc *CPU, INT32 (*Func)(INT32 irqline))
 {
-	u32 PC = CPU->PC;
-	return zRealPC;
+	CPU->Interrupt_Callback = Func;
 }
-
-void Cz80_Set_PC(cz80_struc *cpu, u32 val)
-{
-	cpu->BasePC = (u32)cpu->Fetch[val >> CZ80_FETCH_SFT];
-	cpu->PC = val + cpu->BasePC;
-}
-
-#endif // !GP2X

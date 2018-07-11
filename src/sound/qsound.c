@@ -444,6 +444,7 @@ void qsound_update(void *data, u8 *p, int length)
 
 	memset(qsound_buffer, 0, sizeof(qsound_buffer));
 
+	//qsound_update_stream_normal();
 	(*qsound_update_stream)();
 	
 	for (i = 0; i < qsound_sample_length; i++)
@@ -457,7 +458,6 @@ void qsound_update(void *data, u8 *p, int length)
 		*buffer++ = lt;
 		*buffer++ = rt;
 	}
-
 #ifdef OSS_SOUND
     write(sound_fd, p, qsound_sample_length << 2);
 #endif

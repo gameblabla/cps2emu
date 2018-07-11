@@ -1,4 +1,12 @@
 /******************************************************************************
+
+	c68k_op.c
+
+	C68K opcodeƒ}ƒNƒ
+
+******************************************************************************/
+
+/******************************************************************************
 	OPCODE $0xxx
 ******************************************************************************/
 
@@ -1647,7 +1655,7 @@ OP(ble_16)             { Bcc_16(LE)                            }	// 6f00
 // 6001
 OP(bra_8)
 {
-	PC += (s32)(s8)Opcode;
+	PC += (INT32)(INT8)Opcode;
 	RET(10)
 }
 
@@ -2326,58 +2334,58 @@ OP(adda_32_i)          { ADDA_RI32(I)                          }	// 04bc
 // e000
 OP(asr_8_s)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = (((Opcode >> 9) - 1) & 7) + 1;
 	USE_CYCLES(sft << 1)
-	src = (s32)(s8)DY;
+	src = (INT32)(INT8)DY;
 	CPU->flag_V = 0;
 	CPU->flag_X = CPU->flag_C = src << ((C68K_SR_C_SFT + 1) - sft);
-	res = ((s32)src) >> sft;
+	res = ((INT32)src) >> sft;
 	CPU->flag_N = res >> 0;
 	CPU->flag_Z = res;
-	*(u8 *)(&DY) = res;
+	*(UINT8 *)(&DY) = res;
 	RET(6)
 }
 
 // e040
 OP(asr_16_s)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = (((Opcode >> 9) - 1) & 7) + 1;
 	USE_CYCLES(sft << 1)
-	src = (s32)(s16)DY;
+	src = (INT32)(INT16)DY;
 	CPU->flag_V = 0;
 	CPU->flag_X = CPU->flag_C = src << ((C68K_SR_C_SFT + 1) - sft);
-	res = ((s32)src) >> sft;
+	res = ((INT32)src) >> sft;
 	CPU->flag_N = res >> 8;
 	CPU->flag_Z = res;
-	*(u16 *)(&DY) = res;
+	*(UINT16 *)(&DY) = res;
 	RET(6)
 }
 
 // e080
 OP(asr_32_s)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = (((Opcode >> 9) - 1) & 7) + 1;
 	USE_CYCLES(sft << 1)
-	src = (s32)DY;
+	src = (INT32)DY;
 	CPU->flag_V = 0;
 	CPU->flag_X = CPU->flag_C = src << ((C68K_SR_C_SFT + 1) - sft);
-	res = ((s32)src) >> sft;
+	res = ((INT32)src) >> sft;
 	CPU->flag_N = res >> 24;
 	CPU->flag_Z = res;
-	*(u32 *)(&DY) = res;
+	*(UINT32 *)(&DY) = res;
 	RET(8)
 }
 
 // e008
 OP(lsr_8_s)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = (((Opcode >> 9) - 1) & 7) + 1;
 	USE_CYCLES(sft << 1)
@@ -2386,14 +2394,14 @@ OP(lsr_8_s)
 	CPU->flag_X = CPU->flag_C = src << ((C68K_SR_C_SFT + 1) - sft);
 	res = src >> sft;
 	CPU->flag_Z = res;
-	*(u8 *)(&DY) = res;
+	*(UINT8 *)(&DY) = res;
 	RET(6)
 }
 
 // e048
 OP(lsr_16_s)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = (((Opcode >> 9) - 1) & 7) + 1;
 	USE_CYCLES(sft << 1)
@@ -2402,14 +2410,14 @@ OP(lsr_16_s)
 	CPU->flag_X = CPU->flag_C = src << ((C68K_SR_C_SFT + 1) - sft);
 	res = src >> sft;
 	CPU->flag_Z = res;
-	*(u16 *)(&DY) = res;
+	*(UINT16 *)(&DY) = res;
 	RET(6)
 }
 
 // e088
 OP(lsr_32_s)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = (((Opcode >> 9) - 1) & 7) + 1;
 	USE_CYCLES(sft << 1)
@@ -2418,14 +2426,14 @@ OP(lsr_32_s)
 	CPU->flag_X = CPU->flag_C = src << ((C68K_SR_C_SFT + 1) - sft);
 	res = src >> sft;
 	CPU->flag_Z = res;
-	*(u32 *)(&DY) = res;
+	*(UINT32 *)(&DY) = res;
 	RET(8)
 }
 
 // e010
 OP(roxr_8_s)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = (((Opcode >> 9) - 1) & 7) + 1;
 	USE_CYCLES(sft << 1)
@@ -2436,14 +2444,14 @@ OP(roxr_8_s)
 	CPU->flag_V = 0;
 	CPU->flag_N = res >> 0;
 	CPU->flag_Z = res & 0xff;
-	*(u8 *)(&DY) = res;
+	*(UINT8 *)(&DY) = res;
 	RET(6)
 }
 
 // e050
 OP(roxr_16_s)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = (((Opcode >> 9) - 1) & 7) + 1;
 	USE_CYCLES(sft << 1)
@@ -2454,14 +2462,14 @@ OP(roxr_16_s)
 	CPU->flag_V = 0;
 	CPU->flag_N = res >> 8;
 	CPU->flag_Z = res & 0xffff;
-	*(u16 *)(&DY) = res;
+	*(UINT16 *)(&DY) = res;
 	RET(6)
 }
 
 // e090
 OP(roxr_32_s)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = (((Opcode >> 9) - 1) & 7) + 1;
 	USE_CYCLES(sft << 1)
@@ -2473,14 +2481,14 @@ OP(roxr_32_s)
 	CPU->flag_V = 0;
 	CPU->flag_N = res >> 24;
 	CPU->flag_Z = res;
-	*(u32 *)(&DY) = res;
+	*(UINT32 *)(&DY) = res;
 	RET(8)
 }
 
 // e018
 OP(ror_8_s)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = (((Opcode >> 9) - 1) & 7) + 1;
 	USE_CYCLES(sft << 1)
@@ -2490,14 +2498,14 @@ OP(ror_8_s)
 	res = (src >> sft) | (src << (8 - sft));
 	CPU->flag_N = res >> 0;
 	CPU->flag_Z = res & 0xff;
-	*(u8 *)(&DY) = res;
+	*(UINT8 *)(&DY) = res;
 	RET(6)
 }
 
 // e058
 OP(ror_16_s)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = (((Opcode >> 9) - 1) & 7) + 1;
 	USE_CYCLES(sft << 1)
@@ -2507,14 +2515,14 @@ OP(ror_16_s)
 	res = (src >> sft) | (src << (16 - sft));
 	CPU->flag_N = res >> 8;
 	CPU->flag_Z = res & 0xffff;
-	*(u16 *)(&DY) = res;
+	*(UINT16 *)(&DY) = res;
 	RET(6)
 }
 
 // e098
 OP(ror_32_s)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = (((Opcode >> 9) - 1) & 7) + 1;
 	USE_CYCLES(sft << 1)
@@ -2524,14 +2532,14 @@ OP(ror_32_s)
 	res = (src >> sft) | (src << (32 - sft));
 	CPU->flag_N = res >> 24;
 	CPU->flag_Z = res;
-	*(u32 *)(&DY) = res;
+	*(UINT32 *)(&DY) = res;
 	RET(8)
 }
 
 // e100
 OP(asl_8_s)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = (((Opcode >> 9) - 1) & 7) + 1;
 	USE_CYCLES(sft << 1)
@@ -2542,12 +2550,12 @@ OP(asl_8_s)
 		res = src << sft;
 		CPU->flag_N = res >> 0;
 		CPU->flag_Z = res & 0xff;
-		*(u8 *)(&DY) = res;
+		*(UINT8 *)(&DY) = res;
 		CPU->flag_V = 0;
 		if ((sft > 7) && (src)) CPU->flag_V = C68K_SR_V;
 		else
 		{
-			u32 msk = (((s32)0x80000000) >> (sft + 24)) & 0xff;
+			UINT32 msk = (((INT32)0x80000000) >> (sft + 24)) & 0xff;
 			src &= msk;
 			if ((src) && (src != msk)) CPU->flag_V = C68K_SR_V;
 		}
@@ -2558,7 +2566,7 @@ OP(asl_8_s)
 	else CPU->flag_V = 0;
 	CPU->flag_X = CPU->flag_C = src << C68K_SR_C_SFT;
 	res = 0;
-	*(u8 *)(&DY) = res;
+	*(UINT8 *)(&DY) = res;
 	CPU->flag_N = 0;
 	CPU->flag_Z = 0;
 	RET(6)
@@ -2567,7 +2575,7 @@ OP(asl_8_s)
 // e140
 OP(asl_16_s)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = (((Opcode >> 9) - 1) & 7) + 1;
 	USE_CYCLES(sft << 1)
@@ -2576,10 +2584,10 @@ OP(asl_16_s)
 	res = src << sft;
 	CPU->flag_N = res >> 8;
 	CPU->flag_Z = res & 0xffff;
-	*(u16 *)(&DY) = res;
+	*(UINT16 *)(&DY) = res;
 	CPU->flag_V = 0;
 	{
-		u32 msk = (((s32)0x80000000) >> (sft + 16)) & 0xffff;
+		UINT32 msk = (((INT32)0x80000000) >> (sft + 16)) & 0xffff;
 		src &= msk;
 		if ((src) && (src != msk)) CPU->flag_V = C68K_SR_V;
 	}
@@ -2589,7 +2597,7 @@ OP(asl_16_s)
 // e180
 OP(asl_32_s)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = (((Opcode >> 9) - 1) & 7) + 1;
 	USE_CYCLES(sft << 1)
@@ -2598,10 +2606,10 @@ OP(asl_32_s)
 	res = src << sft;
 	CPU->flag_N = res >> 24;
 	CPU->flag_Z = res;
-	*(u32 *)(&DY) = res;
+	*(UINT32 *)(&DY) = res;
 	CPU->flag_V = 0;
 	{
-		u32 msk = (((s32)0x80000000) >> (sft + 0));
+		UINT32 msk = (((INT32)0x80000000) >> (sft + 0));
 		src &= msk;
 		if ((src) && (src != msk)) CPU->flag_V = C68K_SR_V;
 	}
@@ -2611,7 +2619,7 @@ OP(asl_32_s)
 // e108
 OP(lsl_8_s)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = (((Opcode >> 9) - 1) & 7) + 1;
 	USE_CYCLES(sft << 1)
@@ -2621,14 +2629,14 @@ OP(lsl_8_s)
 	res = src << sft;
 	CPU->flag_N = res >> 0;
 	CPU->flag_Z = res & 0xff;
-	*(u8 *)(&DY) = res;
+	*(UINT8 *)(&DY) = res;
 	RET(6)
 }
 
 // e148
 OP(lsl_16_s)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = (((Opcode >> 9) - 1) & 7) + 1;
 	USE_CYCLES(sft << 1)
@@ -2638,14 +2646,14 @@ OP(lsl_16_s)
 	res = src << sft;
 	CPU->flag_N = res >> 8;
 	CPU->flag_Z = res & 0xffff;
-	*(u16 *)(&DY) = res;
+	*(UINT16 *)(&DY) = res;
 	RET(6)
 }
 
 // e188
 OP(lsl_32_s)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = (((Opcode >> 9) - 1) & 7) + 1;
 	USE_CYCLES(sft << 1)
@@ -2655,14 +2663,14 @@ OP(lsl_32_s)
 	res = src << sft;
 	CPU->flag_N = res >> 24;
 	CPU->flag_Z = res;
-	*(u32 *)(&DY) = res;
+	*(UINT32 *)(&DY) = res;
 	RET(8)
 }
 
 // e110
 OP(roxl_8_s)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = (((Opcode >> 9) - 1) & 7) + 1;
 	USE_CYCLES(sft << 1)
@@ -2673,14 +2681,14 @@ OP(roxl_8_s)
 	CPU->flag_V = 0;
 	CPU->flag_N = res >> 0;
 	CPU->flag_Z = res & 0xff;
-	*(u8 *)(&DY) = res;
+	*(UINT8 *)(&DY) = res;
 	RET(6)
 }
 
 // e150
 OP(roxl_16_s)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = (((Opcode >> 9) - 1) & 7) + 1;
 	USE_CYCLES(sft << 1)
@@ -2691,14 +2699,14 @@ OP(roxl_16_s)
 	CPU->flag_V = 0;
 	CPU->flag_N = res >> 8;
 	CPU->flag_Z = res & 0xffff;
-	*(u16 *)(&DY) = res;
+	*(UINT16 *)(&DY) = res;
 	RET(6)
 }
 
 // e190
 OP(roxl_32_s)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = (((Opcode >> 9) - 1) & 7) + 1;
 	USE_CYCLES(sft << 1)
@@ -2710,14 +2718,14 @@ OP(roxl_32_s)
 	CPU->flag_V = 0;
 	CPU->flag_N = res >> 24;
 	CPU->flag_Z = res;
-	*(u32 *)(&DY) = res;
+	*(UINT32 *)(&DY) = res;
 	RET(8)
 }
 
 // e118
 OP(rol_8_s)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = (((Opcode >> 9) - 1) & 7) + 1;
 	USE_CYCLES(sft << 1)
@@ -2727,14 +2735,14 @@ OP(rol_8_s)
 	res = (src << sft) | (src >> (8 - sft));
 	CPU->flag_N = res >> 0;
 	CPU->flag_Z = res & 0xff;
-	*(u8 *)(&DY) = res;
+	*(UINT8 *)(&DY) = res;
 	RET(6)
 }
 
 // e158
 OP(rol_16_s)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = (((Opcode >> 9) - 1) & 7) + 1;
 	USE_CYCLES(sft << 1)
@@ -2744,14 +2752,14 @@ OP(rol_16_s)
 	res = (src << sft) | (src >> (16 - sft));
 	CPU->flag_N = res >> 8;
 	CPU->flag_Z = res & 0xffff;
-	*(u16 *)(&DY) = res;
+	*(UINT16 *)(&DY) = res;
 	RET(6)
 }
 
 // e198
 OP(rol_32_s)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = (((Opcode >> 9) - 1) & 7) + 1;
 	USE_CYCLES(sft << 1)
@@ -2761,17 +2769,17 @@ OP(rol_32_s)
 	res = (src << sft) | (src >> (32 - sft));
 	CPU->flag_N = res >> 24;
 	CPU->flag_Z = res;
-	*(u32 *)(&DY) = res;
+	*(UINT32 *)(&DY) = res;
 	RET(8)
 }
 
 // e020
 OP(asr_8_r)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = DX & 0x3f;
-	src = (s32)(s8)DY;
+	src = (INT32)(INT8)DY;
 	if (sft)
 	{
 		USE_CYCLES(sft << 1)
@@ -2779,10 +2787,10 @@ OP(asr_8_r)
 		{
 			CPU->flag_V = 0;
 			CPU->flag_X = CPU->flag_C = src << ((C68K_SR_C_SFT + 1) - sft);
-			res = ((s32)src) >> sft;
+			res = ((INT32)src) >> sft;
 			CPU->flag_N = res >> 0;
 			CPU->flag_Z = res;
-			*(u8 *)(&DY) = res;
+			*(UINT8 *)(&DY) = res;
 			RET(6)
 		}
 
@@ -2794,7 +2802,7 @@ OP(asr_8_r)
 			CPU->flag_C = C68K_SR_C;
 			CPU->flag_X = C68K_SR_X;
 			res = 0xff;
-			*(u8 *)(&DY) = res;
+			*(UINT8 *)(&DY) = res;
 			RET(6)
 		}
 
@@ -2804,7 +2812,7 @@ OP(asr_8_r)
 		CPU->flag_C = 0;
 		CPU->flag_X = 0;
 		res = 0;
-		*(u8 *)(&DY) = res;
+		*(UINT8 *)(&DY) = res;
 		RET(6)
 	}
 
@@ -2818,10 +2826,10 @@ OP(asr_8_r)
 // e060
 OP(asr_16_r)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = DX & 0x3f;
-	src = (s32)(s16)DY;
+	src = (INT32)(INT16)DY;
 	if (sft)
 	{
 		USE_CYCLES(sft << 1)
@@ -2829,10 +2837,10 @@ OP(asr_16_r)
 		{
 			CPU->flag_V = 0;
 			CPU->flag_X = CPU->flag_C = (src >> (sft - 1)) << C68K_SR_C_SFT;
-			res = ((s32)src) >> sft;
+			res = ((INT32)src) >> sft;
 			CPU->flag_N = res >> 8;
 			CPU->flag_Z = res;
-			*(u16 *)(&DY) = res;
+			*(UINT16 *)(&DY) = res;
 			RET(6)
 		}
 
@@ -2844,7 +2852,7 @@ OP(asr_16_r)
 			CPU->flag_C = C68K_SR_C;
 			CPU->flag_X = C68K_SR_X;
 			res = 0xffff;
-			*(u16 *)(&DY) = res;
+			*(UINT16 *)(&DY) = res;
 			RET(6)
 		}
 
@@ -2854,7 +2862,7 @@ OP(asr_16_r)
 		CPU->flag_C = 0;
 		CPU->flag_X = 0;
 		res = 0;
-		*(u16 *)(&DY) = res;
+		*(UINT16 *)(&DY) = res;
 		RET(6)
 	}
 
@@ -2868,10 +2876,10 @@ OP(asr_16_r)
 // e0a0
 OP(asr_32_r)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = DX & 0x3f;
-	src = (s32)DY;
+	src = (INT32)DY;
 	if (sft)
 	{
 		USE_CYCLES(sft << 1)
@@ -2879,10 +2887,10 @@ OP(asr_32_r)
 		{
 			CPU->flag_V = 0;
 			CPU->flag_X = CPU->flag_C = (src >> (sft - 1)) << C68K_SR_C_SFT;
-			res = ((s32)src) >> sft;
+			res = ((INT32)src) >> sft;
 			CPU->flag_N = res >> 24;
 			CPU->flag_Z = res;
-			*(u32 *)(&DY) = res;
+			*(UINT32 *)(&DY) = res;
 			RET(8)
 		}
 
@@ -2894,7 +2902,7 @@ OP(asr_32_r)
 			CPU->flag_C = C68K_SR_C;
 			CPU->flag_X = C68K_SR_X;
 			res = 0xffffffff;
-			*(u32 *)(&DY) = res;
+			*(UINT32 *)(&DY) = res;
 			RET(8)
 		}
 
@@ -2904,7 +2912,7 @@ OP(asr_32_r)
 		CPU->flag_C = 0;
 		CPU->flag_X = 0;
 		res = 0;
-		*(u32 *)(&DY) = res;
+		*(UINT32 *)(&DY) = res;
 		RET(8)
 	}
 
@@ -2918,7 +2926,7 @@ OP(asr_32_r)
 // e028
 OP(lsr_8_r)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = DX & 0x3f;
 	src = READ_REG_8(DY);
@@ -2931,7 +2939,7 @@ OP(lsr_8_r)
 			CPU->flag_X = CPU->flag_C = src << ((C68K_SR_C_SFT + 1) - sft);
 			res = src >> sft;
 			CPU->flag_Z = res;
-			*(u8 *)(&DY) = res;
+			*(UINT8 *)(&DY) = res;
 			RET(6)
 		}
 
@@ -2940,7 +2948,7 @@ OP(lsr_8_r)
 		CPU->flag_Z = 0;
 		CPU->flag_V = 0;
 		res = 0;
-		*(u8 *)(&DY) = res;
+		*(UINT8 *)(&DY) = res;
 		RET(6)
 	}
 
@@ -2954,7 +2962,7 @@ OP(lsr_8_r)
 // e068
 OP(lsr_16_r)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = DX & 0x3f;
 	src = READ_REG_16(DY);
@@ -2967,7 +2975,7 @@ OP(lsr_16_r)
 			CPU->flag_X = CPU->flag_C = (src >> (sft - 1)) << C68K_SR_C_SFT;
 			res = src >> sft;
 			CPU->flag_Z = res;
-			*(u16 *)(&DY) = res;
+			*(UINT16 *)(&DY) = res;
 			RET(6)
 		}
 
@@ -2976,7 +2984,7 @@ OP(lsr_16_r)
 		CPU->flag_Z = 0;
 		CPU->flag_V = 0;
 		res = 0;
-		*(u16 *)(&DY) = res;
+		*(UINT16 *)(&DY) = res;
 		RET(6)
 	}
 
@@ -2990,7 +2998,7 @@ OP(lsr_16_r)
 // e0a8
 OP(lsr_32_r)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = DX & 0x3f;
 	src = READ_REG_32(DY);
@@ -3003,7 +3011,7 @@ OP(lsr_32_r)
 			CPU->flag_X = CPU->flag_C = (src >> (sft - 1)) << C68K_SR_C_SFT;
 			res = src >> sft;
 			CPU->flag_Z = res;
-			*(u32 *)(&DY) = res;
+			*(UINT32 *)(&DY) = res;
 			RET(8)
 		}
 
@@ -3014,7 +3022,7 @@ OP(lsr_32_r)
 		CPU->flag_Z = 0;
 		CPU->flag_V = 0;
 		res = 0;
-		*(u32 *)(&DY) = res;
+		*(UINT32 *)(&DY) = res;
 		RET(8)
 	}
 
@@ -3028,7 +3036,7 @@ OP(lsr_32_r)
 // e030
 OP(roxr_8_r)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = DX & 0x3f;
 	src = READ_REG_8(DY);
@@ -3043,7 +3051,7 @@ OP(roxr_8_r)
 		CPU->flag_V = 0;
 		CPU->flag_N = res >> 0;
 		CPU->flag_Z = res & 0xff;
-		*(u8 *)(&DY) = res;
+		*(UINT8 *)(&DY) = res;
 		RET(6)
 	}
 
@@ -3057,7 +3065,7 @@ OP(roxr_8_r)
 // e070
 OP(roxr_16_r)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = DX & 0x3f;
 	src = READ_REG_16(DY);
@@ -3072,7 +3080,7 @@ OP(roxr_16_r)
 		CPU->flag_V = 0;
 		CPU->flag_N = res >> 8;
 		CPU->flag_Z = res & 0xffff;
-		*(u16 *)(&DY) = res;
+		*(UINT16 *)(&DY) = res;
 		RET(6)
 	}
 
@@ -3086,7 +3094,7 @@ OP(roxr_16_r)
 // e0b0
 OP(roxr_32_r)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = DX & 0x3f;
 	src = READ_REG_32(DY);
@@ -3106,7 +3114,7 @@ OP(roxr_32_r)
 		CPU->flag_V = 0;
 		CPU->flag_N = res >> 24;
 		CPU->flag_Z = res;
-		*(u32 *)(&DY) = res;
+		*(UINT32 *)(&DY) = res;
 		RET(8)
 	}
 
@@ -3120,7 +3128,7 @@ OP(roxr_32_r)
 // e038
 OP(ror_8_r)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = DX & 0x3f;
 	src = READ_REG_8(DY);
@@ -3134,7 +3142,7 @@ OP(ror_8_r)
 		CPU->flag_V = 0;
 		CPU->flag_N = res >> 0;
 		CPU->flag_Z = res & 0xff;
-		*(u8 *)(&DY) = res;
+		*(UINT8 *)(&DY) = res;
 		RET(6)
 	}
 
@@ -3148,7 +3156,7 @@ OP(ror_8_r)
 // e078
 OP(ror_16_r)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = DX & 0x3f;
 	src = READ_REG_16(DY);
@@ -3162,7 +3170,7 @@ OP(ror_16_r)
 		CPU->flag_V = 0;
 		CPU->flag_N = res >> 8;
 		CPU->flag_Z = res & 0xffff;
-		*(u16 *)(&DY) = res;
+		*(UINT16 *)(&DY) = res;
 		RET(6)
 	}
 
@@ -3176,7 +3184,7 @@ OP(ror_16_r)
 // e0b8
 OP(ror_32_r)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = DX & 0x3f;
 	src = READ_REG_32(DY);
@@ -3190,7 +3198,7 @@ OP(ror_32_r)
 		CPU->flag_V = 0;
 		CPU->flag_N = res >> 24;
 		CPU->flag_Z = res;
-		*(u32 *)(&DY) = res;
+		*(UINT32 *)(&DY) = res;
 		RET(8)
 	}
 
@@ -3204,7 +3212,7 @@ OP(ror_32_r)
 // e120
 OP(asl_8_r)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = DX & 0x3f;
 	src = READ_REG_8(DY);
@@ -3217,10 +3225,10 @@ OP(asl_8_r)
 			res = (src << sft) & 0xff;
 			CPU->flag_N = res >> 0;
 			CPU->flag_Z = res;
-			*(u8 *)(&DY) = res;
+			*(UINT8 *)(&DY) = res;
 			CPU->flag_V = 0;
 			{
-				u32 msk = (((s32)0x80000000) >> (sft + 24)) & 0xff;
+				UINT32 msk = (((INT32)0x80000000) >> (sft + 24)) & 0xff;
 				src &= msk;
 				if ((src) && (src != msk)) CPU->flag_V = C68K_SR_V;
 			}
@@ -3231,7 +3239,7 @@ OP(asl_8_r)
 		else CPU->flag_C = 0;
 		CPU->flag_X = CPU->flag_C;
 		CPU->flag_V = (src) ? C68K_SR_V : 0;
-		*(u8 *)(&DY) = 0;
+		*(UINT8 *)(&DY) = 0;
 		CPU->flag_N = 0;
 		CPU->flag_Z = 0;
 		RET(6)
@@ -3247,7 +3255,7 @@ OP(asl_8_r)
 // e160
 OP(asl_16_r)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = DX & 0x3f;
 	src = READ_REG_16(DY);
@@ -3260,10 +3268,10 @@ OP(asl_16_r)
 			res = (src << sft) & 0xffff;
 			CPU->flag_N = res >> 8;
 			CPU->flag_Z = res;
-			*(u16 *)(&DY) = res;
+			*(UINT16 *)(&DY) = res;
 			CPU->flag_V = 0;
 			{
-				u32 msk = (((s32)0x80000000) >> (sft + 16)) & 0xffff;
+				UINT32 msk = (((INT32)0x80000000) >> (sft + 16)) & 0xffff;
 				src &= msk;
 				if ((src) && (src != msk)) CPU->flag_V = C68K_SR_V;
 			}
@@ -3274,7 +3282,7 @@ OP(asl_16_r)
 		else CPU->flag_C = 0;
 		CPU->flag_X = CPU->flag_C;
 		CPU->flag_V = (src) ? C68K_SR_V : 0;
-		*(u16 *)(&DY) = 0;
+		*(UINT16 *)(&DY) = 0;
 		CPU->flag_N = 0;
 		CPU->flag_Z = 0;
 		RET(6)
@@ -3290,7 +3298,7 @@ OP(asl_16_r)
 // e1a0
 OP(asl_32_r)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = DX & 0x3f;
 	src = READ_REG_32(DY);
@@ -3303,10 +3311,10 @@ OP(asl_32_r)
 			res = src << sft;
 			CPU->flag_N = res >> 24;
 			CPU->flag_Z = res;
-			*(u32 *)(&DY) = res;
+			*(UINT32 *)(&DY) = res;
 			CPU->flag_V = 0;
 			{
-				u32 msk = (((s32)0x80000000) >> (sft + 0));
+				UINT32 msk = (((INT32)0x80000000) >> (sft + 0));
 				src &= msk;
 				if ((src) && (src != msk)) CPU->flag_V = C68K_SR_V;
 			}
@@ -3317,7 +3325,7 @@ OP(asl_32_r)
 		else CPU->flag_C = 0;
 		CPU->flag_X = CPU->flag_C;
 		CPU->flag_V = (src) ? C68K_SR_V : 0;
-		*(u32 *)(&DY) = 0;
+		*(UINT32 *)(&DY) = 0;
 		CPU->flag_N = 0;
 		CPU->flag_Z = 0;
 		RET(8)
@@ -3333,7 +3341,7 @@ OP(asl_32_r)
 // e128
 OP(lsl_8_r)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = DX & 0x3f;
 	src = READ_REG_8(DY);
@@ -3347,7 +3355,7 @@ OP(lsl_8_r)
 			CPU->flag_V = 0;
 			CPU->flag_N = res >> 0;
 			CPU->flag_Z = res;
-			*(u8 *)(&DY) = res;
+			*(UINT8 *)(&DY) = res;
 			RET(6)
 		}
 
@@ -3355,7 +3363,7 @@ OP(lsl_8_r)
 		CPU->flag_N = 0;
 		CPU->flag_Z = 0;
 		CPU->flag_V = 0;
-		*(u8 *)(&DY) = 0;
+		*(UINT8 *)(&DY) = 0;
 		RET(6)
 	}
 
@@ -3369,7 +3377,7 @@ OP(lsl_8_r)
 // e168
 OP(lsl_16_r)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = DX & 0x3f;
 	src = READ_REG_16(DY);
@@ -3383,7 +3391,7 @@ OP(lsl_16_r)
 			CPU->flag_V = 0;
 			CPU->flag_N = res >> 8;
 			CPU->flag_Z = res;
-			*(u16 *)(&DY) = res;
+			*(UINT16 *)(&DY) = res;
 			RET(6)
 		}
 
@@ -3391,7 +3399,7 @@ OP(lsl_16_r)
 		CPU->flag_N = 0;
 		CPU->flag_Z = 0;
 		CPU->flag_V = 0;
-		*(u16 *)(&DY) = 0;
+		*(UINT16 *)(&DY) = 0;
 		RET(6)
 	}
 
@@ -3405,7 +3413,7 @@ OP(lsl_16_r)
 // e1a8
 OP(lsl_32_r)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = DX & 0x3f;
 	src = READ_REG_32(DY);
@@ -3419,7 +3427,7 @@ OP(lsl_32_r)
 			CPU->flag_V = 0;
 			CPU->flag_N = res >> 24;
 			CPU->flag_Z = res;
-			*(u32 *)(&DY) = res;
+			*(UINT32 *)(&DY) = res;
 			RET(8)
 		}
 
@@ -3429,7 +3437,7 @@ OP(lsl_32_r)
 		CPU->flag_N = 0;
 		CPU->flag_Z = 0;
 		CPU->flag_V = 0;
-		*(u32 *)(&DY) = 0;
+		*(UINT32 *)(&DY) = 0;
 		RET(8)
 	}
 
@@ -3443,7 +3451,7 @@ OP(lsl_32_r)
 // e130
 OP(roxl_8_r)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = DX & 0x3f;
 	src = READ_REG_8(DY);
@@ -3458,7 +3466,7 @@ OP(roxl_8_r)
 		CPU->flag_V = 0;
 		CPU->flag_N = res >> 0;
 		CPU->flag_Z = res & 0xff;
-		*(u8 *)(&DY) = res;
+		*(UINT8 *)(&DY) = res;
 		RET(6)
 	}
 
@@ -3472,7 +3480,7 @@ OP(roxl_8_r)
 // e170
 OP(roxl_16_r)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = DX & 0x3f;
 	src = READ_REG_16(DY);
@@ -3487,7 +3495,7 @@ OP(roxl_16_r)
 		CPU->flag_V = 0;
 		CPU->flag_N = res >> 8;
 		CPU->flag_Z = res & 0xffff;
-		*(u16 *)(&DY) = res;
+		*(UINT16 *)(&DY) = res;
 		RET(6)
 	}
 
@@ -3501,7 +3509,7 @@ OP(roxl_16_r)
 // e1b0
 OP(roxl_32_r)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = DX & 0x3f;
 	src = READ_REG_32(DY);
@@ -3521,7 +3529,7 @@ OP(roxl_32_r)
 		CPU->flag_V = 0;
 		CPU->flag_N = res >> 24;
 		CPU->flag_Z = res;
-		*(u32 *)(&DY) = res;
+		*(UINT32 *)(&DY) = res;
 		RET(8)
 	}
 
@@ -3535,7 +3543,7 @@ OP(roxl_32_r)
 // e138
 OP(rol_8_r)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = DX & 0x3f;
 	src = READ_REG_8(DY);
@@ -3549,7 +3557,7 @@ OP(rol_8_r)
 			CPU->flag_V = 0;
 			CPU->flag_N = res >> 0;
 			CPU->flag_Z = res;
-			*(u8 *)(&DY) = res;
+			*(UINT8 *)(&DY) = res;
 			RET(6)
 		}
 
@@ -3570,7 +3578,7 @@ OP(rol_8_r)
 // e178
 OP(rol_16_r)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = DX & 0x3f;
 	src = READ_REG_16(DY);
@@ -3584,7 +3592,7 @@ OP(rol_16_r)
 			CPU->flag_V = 0;
 			CPU->flag_N = res >> 8;
 			CPU->flag_Z = res;
-			*(u16 *)(&DY) = res;
+			*(UINT16 *)(&DY) = res;
 			RET(6)
 		}
 
@@ -3605,7 +3613,7 @@ OP(rol_16_r)
 // e1b8
 OP(rol_32_r)
 {
-	u32 sft;
+	UINT32 sft;
 
 	sft = DX & 0x3f;
 	src = READ_REG_32(DY);
@@ -3619,7 +3627,7 @@ OP(rol_32_r)
 			CPU->flag_V = 0;
 			CPU->flag_N = res >> 24;
 			CPU->flag_Z = res;
-			*(u32 *)(&DY) = res;
+			*(UINT32 *)(&DY) = res;
 			RET(8)
 		}
 
@@ -4579,3 +4587,31 @@ OP(1111)
 	EXCEPTION(C68K_1111_EX)
 	RET(34)
 }
+
+#ifdef BUILD_NCDZPSP
+
+OP(FAC0)
+{
+	extern void cdrom_load_files(void);
+
+	cdrom_load_files();
+	RET(400)
+}
+
+OP(FAC1)
+{
+	extern void neogeo_cdda_control(void);
+
+	neogeo_cdda_control();
+	RET(200)
+}
+
+OP(FAC2)
+{
+	extern void neogeo_bios_exit(void);
+
+	neogeo_bios_exit();
+	RET(200)
+}
+
+#endif /* BUILD_NCDZPSP */

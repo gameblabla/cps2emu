@@ -1,10 +1,12 @@
-/********************************************************************************/
-/*                                                                              */
-/* CZ80 CB opcode include source file                                           */
-/* C Z80 emulator version 0.9                                                   */
-/* Copyright 2004-2005 StÑéhane Dallongeville                                   */
-/*                                                                              */
-/********************************************************************************/
+/******************************************************************************
+ *
+ * CZ80 CB opcode include source file
+ * CZ80 emulator version 0.9
+ * Copyright 2004-2005 Stéphane Dallongeville
+ *
+ * (Modified by NJ)
+ *
+ *****************************************************************************/
 
 #if CZ80_USE_JUMPTABLE
 	goto *JumpTableCB[Opcode];
@@ -32,10 +34,10 @@ switch (Opcode)
 
 	OPCB(0x06): // RLC  (HL)
 		adr = zHL;
-		READ_BYTE(adr, src)
+		src = READ_MEM8(adr);
 		res = (src << 1) | (src >> 7);
 		zF = SZP[res] | (src >> 7);
-		WRITE_BYTE(adr, res)
+		WRITE_MEM8(adr, res);
 		RET(15)
 
 /*-----------------------------------------
@@ -57,10 +59,10 @@ switch (Opcode)
 
 	OPCB(0x0e): // RRC  (HL)
 		adr = zHL;
-		READ_BYTE(adr, src)
+		src = READ_MEM8(adr);
 		res = (src >> 1) | (src << 7);
 		zF = SZP[res] | (src & CF);
-		WRITE_BYTE(adr, res)
+		WRITE_MEM8(adr, res);
 		RET(15)
 
 /*-----------------------------------------
@@ -82,10 +84,10 @@ switch (Opcode)
 
 	OPCB(0x16): // RL   (HL)
 		adr = zHL;
-		READ_BYTE(adr, src)
+		src = READ_MEM8(adr);
 		res = (src << 1) | (zF & CF);
 		zF = SZP[res] | (src >> 7);
-		WRITE_BYTE(adr, res)
+		WRITE_MEM8(adr, res);
 		RET(15)
 
 /*-----------------------------------------
@@ -107,10 +109,10 @@ switch (Opcode)
 
 	OPCB(0x1e): // RR   (HL)
 		adr = zHL;
-		READ_BYTE(adr, src)
+		src = READ_MEM8(adr);
 		res = (src >> 1) | (zF << 7);
 		zF = SZP[res] | (src & CF);
-		WRITE_BYTE(adr, res)
+		WRITE_MEM8(adr, res);
 		RET(15)
 
 /*-----------------------------------------
@@ -132,10 +134,10 @@ switch (Opcode)
 
 	OPCB(0x26): // SLA  (HL)
 		adr = zHL;
-		READ_BYTE(adr, src)
+		src = READ_MEM8(adr);
 		res = src << 1;
 		zF = SZP[res] | (src >> 7);
-		WRITE_BYTE(adr, res)
+		WRITE_MEM8(adr, res);
 		RET(15)
 
 /*-----------------------------------------
@@ -157,10 +159,10 @@ switch (Opcode)
 
 	OPCB(0x2e): // SRA  (HL)
 		adr = zHL;
-		READ_BYTE(adr, src)
+		src = READ_MEM8(adr);
 		res = (src >> 1) | (src & 0x80);
 		zF = SZP[res] | (src & CF);
-		WRITE_BYTE(adr, res)
+		WRITE_MEM8(adr, res);
 		RET(15)
 
 /*-----------------------------------------
@@ -182,10 +184,10 @@ switch (Opcode)
 
 	OPCB(0x36): // SLL  (HL)
 		adr = zHL;
-		READ_BYTE(adr, src)
+		src = READ_MEM8(adr);
 		res = (src << 1) | 0x01;
 		zF = SZP[res] | (src >> 7);
-		WRITE_BYTE(adr, res)
+		WRITE_MEM8(adr, res);
 		RET(15)
 
 /*-----------------------------------------
@@ -207,10 +209,10 @@ switch (Opcode)
 
 	OPCB(0x3e): // SRL  (HL)
 		adr = zHL;
-		READ_BYTE(adr, src)
+		src = READ_MEM8(adr);
 		res = src >> 1;
 		zF = SZP[res] | (src & CF);
-		WRITE_BYTE(adr, res)
+		WRITE_MEM8(adr, res);
 		RET(15)
 
 /*-----------------------------------------
@@ -291,7 +293,7 @@ switch (Opcode)
 	OPCB(0x6e): // BIT  5,(HL)
 	OPCB(0x76): // BIT  6,(HL)
 	OPCB(0x7e): // BIT  7,(HL)
-		READ_BYTE(zHL, src)
+		src = READ_MEM8(zHL);
 		zF = (zF & CF) | HF | SZ_BIT[src & (1 << ((Opcode >> 3) & 7))];
 		RET(12)
 
@@ -374,9 +376,9 @@ switch (Opcode)
 	OPCB(0xb6): // RES  6,(HL)
 	OPCB(0xbe): // RES  7,(HL)
 		adr = zHL;
-		READ_BYTE(adr, res)
+		res = READ_MEM8(adr);
 		res &= ~(1 << ((Opcode >> 3) & 7));
-		WRITE_BYTE(adr, res)
+		WRITE_MEM8(adr, res);
 		RET(15)
 
 /*-----------------------------------------
@@ -458,11 +460,11 @@ switch (Opcode)
 	OPCB(0xf6): // SET  6,(HL)
 	OPCB(0xfe): // SET  7,(HL)
 		adr = zHL;
-		READ_BYTE(adr, res)
+		res = READ_MEM8(adr);
 		res |= 1 << ((Opcode >> 3) & 7);
-		WRITE_BYTE(adr, res)
+		WRITE_MEM8(adr, res);
 		RET(15)
 
-#if (CZ80_USE_JUMPTABLE == 0)
+#if !CZ80_USE_JUMPTABLE
 }
 #endif

@@ -25,9 +25,9 @@
 #define CPS_VERSION 2
 #define EMU_SYSTEM CPS2
 #define USE_CACHE		1
-//#define SAVE_STATE
+#define SAVE_STATE
 //#define HISCORE
-#define MMUHACK
+//#define MMUHACK
 #ifndef INLINE
 #define INLINE __inline
 #endif

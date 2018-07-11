@@ -14,14 +14,14 @@ SDL_LIBS    := $(shell $(SYSROOT)/usr/bin/sdl-config --libs)
 
 OUTPUTNAME = cps2emu.dge
 
-DEFINES = -DSDL
+DEFINES = -DSDL -DRS97 -DOSS_ENABLED
 INCLUDES = -I. -Isrc -Isrc/cps2 $(SDL_CFLAGS)
 
-OPT_FLAGS  = -Ofast -mips32
+OPT_FLAGS  = -O2 -ffast-math -fdata-sections -ffunction-sections -mhard-float -mips32 -mno-mips16 -mno-shared -std=gnu89
 
 CFLAGS = $(DEFINES) $(INCLUDES) $(OPT_FLAGS) -std=gnu99
 CXXFLAGS = $(DEFINES) $(INCLUDES) $(OPT_FLAGS) -std=gnu++98
-LDFLAGS = $(SDL_LIBS) -lm -ldl -lz -s
+LDFLAGS = $(SDL_LIBS) -Wl,--as-needed -Wl,--gc-sections -flto -lz -s
 
 # Redream (main engine)
 OBJS =  \
@@ -29,7 +29,7 @@ src/emumain.o src/emudraw.o src/usbjoy.o src/font.o src/zip/unzip.o src/zip/zfil
 src/sound/qsound.o src/sound/sndintrf.o src/cps2/cache.o src/cps2/cps2.o src/cps2/cps2crpt.o \
 src/cps2/driver.o src/cps2/eeprom.o src/cps2/inptport.o src/cps2/memintrf.o src/cps2/sprite.o src/cps2/state.o src/cps2/timer.o \
 src/cps2/vidhrdw.o src/cps2/loadrom.o src/cps2/coin.o src/cps2/hiscore.o \
-src/cpu/m68000/c68k.o src/cpu/m68000/c68kexec.o src/cpu/m68000/m68000.o \
+src/cpu/m68000/c68k.o src/cpu/m68000/m68000.o \
 src/cpu/z80/cz80.o src/cpu/z80/z80.o
  
 .c.o:

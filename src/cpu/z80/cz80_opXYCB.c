@@ -1,10 +1,12 @@
-/********************************************************************************/
-/*                                                                              */
-/* CZ80 XYCB opcode include source file                                         */
-/* C Z80 emulator version 0.9                                                   */
-/* Copyright 2004-2005 StÑéhane Dallongeville                                   */
-/*                                                                              */
-/********************************************************************************/
+/******************************************************************************
+ *
+ * CZ80 XYCB opcode include source file
+ * CZ80 emulator version 0.9
+ * Copyright 2004-2005 Stéphane Dallongeville
+ *
+ * (Modified by NJ)
+ *
+ *****************************************************************************/
 
 #if CZ80_USE_JUMPTABLE
 	goto *JumpTableXYCB[Opcode];
@@ -24,18 +26,18 @@ switch (Opcode)
 	OPXYCB(0x04):   // RLC  (Ix+d), H
 	OPXYCB(0x05):   // RLC  (Ix+d), L
 	OPXYCB(0x07):   // RLC  (Ix+d), A
-		READ_BYTE(adr, src)
+		src = READ_MEM8(adr);
 		res = ((src << 1) | (src >> 7)) & 0xff;
 		zF = SZP[res] | (src >> 7);
 		zR8(Opcode) = res;
-		WRITE_BYTE(adr, res)
+		WRITE_MEM8(adr, res);
 		RET(19)
 
 	OPXYCB(0x06):   // RLC  (Ix+d)
-		READ_BYTE(adr, src)
+		src = READ_MEM8(adr);
 		res = ((src << 1) | (src >> 7)) & 0xff;
 		zF = SZP[res] | (src >> 7);
-		WRITE_BYTE(adr, res)
+		WRITE_MEM8(adr, res);
 		RET(19)
 
 /*-----------------------------------------
@@ -49,18 +51,18 @@ switch (Opcode)
 	OPXYCB(0x0c):   // RRC  (Ix+d), H
 	OPXYCB(0x0d):   // RRC  (Ix+d), L
 	OPXYCB(0x0f):   // RRC  (Ix+d), A
-		READ_BYTE(adr, src)
+		src = READ_MEM8(adr);
 		res = ((src >> 1) | (src << 7)) & 0xff;
 		zF = SZP[res] | (src & CF);
 		zR8(Opcode & 7) = res;
-		WRITE_BYTE(adr, res)
+		WRITE_MEM8(adr, res);
 		RET(19)
 
 	OPXYCB(0x0e):   // RRC  (Ix+d)
-		READ_BYTE(adr, src)
+		src = READ_MEM8(adr);
 		res = ((src >> 1) | (src << 7)) & 0xff;
 		zF = SZP[res] | (src & CF);
-		WRITE_BYTE(adr, res)
+		WRITE_MEM8(adr, res);
 		RET(19)
 
 /*-----------------------------------------
@@ -74,18 +76,18 @@ switch (Opcode)
 	OPXYCB(0x14):   // RL   (Ix+d), H
 	OPXYCB(0x15):   // RL   (Ix+d), L
 	OPXYCB(0x17):   // RL   (Ix+d), A
-		READ_BYTE(adr, src)
+		src = READ_MEM8(adr);
 		res = ((src << 1) | (zF & CF)) & 0xff;
 		zF = SZP[res] | (src >> 7);
 		zR8(Opcode & 7) = res;
-		WRITE_BYTE(adr, res)
+		WRITE_MEM8(adr, res);
 		RET(19)
 
 	OPXYCB(0x16):   // RL   (Ix+d)
-		READ_BYTE(adr, src)
+		src = READ_MEM8(adr);
 		res = ((src << 1) | (zF & CF)) & 0xff;
 		zF = SZP[res] | (src >> 7);
-		WRITE_BYTE(adr, res)
+		WRITE_MEM8(adr, res);
 		RET(19)
 
 /*-----------------------------------------
@@ -99,18 +101,18 @@ switch (Opcode)
 	OPXYCB(0x1c):   // RR   (Ix+d), H
 	OPXYCB(0x1d):   // RR   (Ix+d), L
 	OPXYCB(0x1f):   // RR   (Ix+d), A
-		READ_BYTE(adr, src)
+		src = READ_MEM8(adr);
 		res = ((src >> 1) | (zF << 7)) & 0xff;
 		zF = SZP[res] | (src & CF);
 		zR8(Opcode & 7) = res;
-		WRITE_BYTE(adr, res)
+		WRITE_MEM8(adr, res);
 		RET(19)
 
 	OPXYCB(0x1e):   // RR   (Ix+d)
-		READ_BYTE(adr, src)
+		src = READ_MEM8(adr);
 		res = ((src >> 1) | (zF << 7)) & 0xff;
 		zF = SZP[res] | (src & CF);
-		WRITE_BYTE(adr, res)
+		WRITE_MEM8(adr, res);
 		RET(19)
 
 /*-----------------------------------------
@@ -124,18 +126,18 @@ switch (Opcode)
 	OPXYCB(0x24):   // SLA  (Ix+d), H
 	OPXYCB(0x25):   // SLA  (Ix+d), L
 	OPXYCB(0x27):   // SLA  (Ix+d), A
-		READ_BYTE(adr, src)
+		src = READ_MEM8(adr);
 		res = (src << 1) & 0xff;
 		zF = SZP[res] | (src >> 7);
 		zR8(Opcode & 7) = res;
-		WRITE_BYTE(adr, res)
+		WRITE_MEM8(adr, res);
 		RET(19)
 
 	OPXYCB(0x26):   // SLA  (Ix+d)
-		READ_BYTE(adr, src)
+		src = READ_MEM8(adr);
 		res = (src << 1) & 0xff;
 		zF = SZP[res] | (src >> 7);
-		WRITE_BYTE(adr, res)
+		WRITE_MEM8(adr, res);
 		RET(19)
 
 /*-----------------------------------------
@@ -149,18 +151,18 @@ switch (Opcode)
 	OPXYCB(0x2c):   // SRA  (Ix+d), H
 	OPXYCB(0x2d):   // SRA  (Ix+d), L
 	OPXYCB(0x2f):   // SRA  (Ix+d), A
-		READ_BYTE(adr, src)
+		src = READ_MEM8(adr);
 		res = ((src >> 1) | (src & 0x80)) & 0xff;
 		zF = SZP[res] | (src & CF);
 		zR8(Opcode & 7) = res;
-		WRITE_BYTE(adr, res)
+		WRITE_MEM8(adr, res);
 		RET(19)
 
 	OPXYCB(0x2e):   // SRA  (Ix+d)
-		READ_BYTE(adr, src)
+		src = READ_MEM8(adr);
 		res = ((src >> 1) | (src & 0x80)) & 0xff;
 		zF = SZP[res] | (src & CF);
-		WRITE_BYTE(adr, res)
+		WRITE_MEM8(adr, res);
 		RET(19)
 
 /*-----------------------------------------
@@ -174,18 +176,18 @@ switch (Opcode)
 	OPXYCB(0x34):   // SLL  (Ix+d), H
 	OPXYCB(0x35):   // SLL  (Ix+d), L
 	OPXYCB(0x37):   // SLL  (Ix+d), A
-		READ_BYTE(adr, src)
+		src = READ_MEM8(adr);
 		res = ((src << 1) | 0x01) & 0xff;
 		zF = SZP[res] | (src >> 7);
 		zR8(Opcode & 7) = res;
-		WRITE_BYTE(adr, res)
+		WRITE_MEM8(adr, res);
 		RET(19)
 
 	OPXYCB(0x36):   // SLL  (Ix+d)
-		READ_BYTE(adr, src)
+		src = READ_MEM8(adr);
 		res = ((src << 1) | 0x01) & 0xff;
 		zF = SZP[res] | (src >> 7);
-		WRITE_BYTE(adr, res)
+		WRITE_MEM8(adr, res);
 		RET(19)
 
 /*-----------------------------------------
@@ -199,18 +201,18 @@ switch (Opcode)
 	OPXYCB(0x3c):   // SRL  (Ix+d), H
 	OPXYCB(0x3d):   // SRL  (Ix+d), L
 	OPXYCB(0x3f):   // SRL  (Ix+d), A
-		READ_BYTE(adr, src)
+		src = READ_MEM8(adr);
 		res = (src >> 1) & 0xff;
 		zF = SZP[res] | (src & CF);
 		zR8(Opcode & 7) = res;
-		WRITE_BYTE(adr, res)
+		WRITE_MEM8(adr, res);
 		RET(19)
 
 	OPXYCB(0x3e):   // SRL  (Ix+d)
-		READ_BYTE(adr, src)
+		src = READ_MEM8(adr);
 		res = (src >> 1) & 0xff;
 		zF = SZP[res] | (src & CF);
-		WRITE_BYTE(adr, res)
+		WRITE_MEM8(adr, res);
 		RET(19)
 
 /*-----------------------------------------
@@ -289,7 +291,7 @@ switch (Opcode)
 	OPXYCB(0x6e):   // BIT  5,(Ix+d)
 	OPXYCB(0x76):   // BIT  6,(Ix+d)
 	OPXYCB(0x7e):   // BIT  7,(Ix+d)
-		READ_BYTE(adr, src)
+		src = READ_MEM8(adr);
 		zF = (zF & CF) | HF |
 			 (SZ_BIT[src & (1 << ((Opcode >> 3) & 7))] & ~(YF | XF)) |
 			 ((adr >> 8) & (YF | XF));
@@ -362,10 +364,10 @@ switch (Opcode)
 	OPXYCB(0xbc):   // RES  7,(Ix+d),H
 	OPXYCB(0xbd):   // RES  7,(Ix+d),L
 	OPXYCB(0xbf):   // RES  7,(Ix+d),A
-		READ_BYTE(adr, res)
+		res = READ_MEM8(adr);
 		res &= ~(1 << ((Opcode >> 3) & 7));
 		zR8(Opcode & 7) = res;
-		WRITE_BYTE(adr, res)
+		WRITE_MEM8(adr, res);
 		RET(19)
 
 	OPXYCB(0x86):   // RES  0,(Ix+d)
@@ -376,9 +378,9 @@ switch (Opcode)
 	OPXYCB(0xae):   // RES  5,(Ix+d)
 	OPXYCB(0xb6):   // RES  6,(Ix+d)
 	OPXYCB(0xbe):   // RES  7,(Ix+d)
-		READ_BYTE(adr, res)
+		res = READ_MEM8(adr);
 		res &= ~(1 << ((Opcode >> 3) & 7));
-		WRITE_BYTE(adr, res)
+		WRITE_MEM8(adr, res);
 		RET(19)
 
 /*-----------------------------------------
@@ -448,10 +450,10 @@ switch (Opcode)
 	OPXYCB(0xfc):   // SET  7,(Ix+d),H
 	OPXYCB(0xfd):   // SET  7,(Ix+d),L
 	OPXYCB(0xff):   // SET  7,(Ix+d),A
-		READ_BYTE(adr, res)
+		res = READ_MEM8(adr);
 		res |= 1 << ((Opcode >> 3) & 7);
 		zR8(Opcode & 7) = res;
-		WRITE_BYTE(adr, res)
+		WRITE_MEM8(adr, res);
 		RET(19)
 
 	OPXYCB(0xc6):   // SET  0,(Ix+d)
@@ -462,11 +464,11 @@ switch (Opcode)
 	OPXYCB(0xee):   // SET  5,(Ix+d)
 	OPXYCB(0xf6):   // SET  6,(Ix+d)
 	OPXYCB(0xfe):   // SET  7,(Ix+d)
-		READ_BYTE(adr, res)
+		res = READ_MEM8(adr);
 		res |= 1 << ((Opcode >> 3) & 7);
-		WRITE_BYTE(adr, res)
+		WRITE_MEM8(adr, res);
 		RET(19)
 
-#if (CZ80_USE_JUMPTABLE == 0)
+#if !CZ80_USE_JUMPTABLE
 }
 #endif

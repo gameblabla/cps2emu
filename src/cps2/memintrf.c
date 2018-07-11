@@ -313,9 +313,10 @@ static int load_rom_sound1(void)
 	int i;
 	char fname[32], *parent;
 
-	if ((memory_region_sound1 = memalign(MEM_ALIGN, memory_length_sound1)) == NULL)
+	if ((memory_region_sound1 = malloc(memory_length_sound1)) == NULL)
 	{
 		error_memory("REGION_SOUND1");
+		printf("No sound rom\n");
 		return 0;
 	}
 	memset(memory_region_sound1, 0, memory_length_sound1);
@@ -327,10 +328,11 @@ static int load_rom_sound1(void)
 		if (file_open(game_name, parent_name, snd1rom[i].crc, fname) == -1)
 		{
 			error_rom("SOUND1");
+			printf("No sound rom\n");
 			return 0;
 		}
 
-		msg_printf("Loading Sound Rom \"%s\"\n", fname);
+		printf("Loading Sound Rom \"%s\"\n", fname);
 
 		i = rom_load(snd1rom, memory_region_sound1, i, num_snd1rom);
 

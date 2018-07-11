@@ -1,10 +1,12 @@
-/********************************************************************************/
-/*                                                                              */
-/* CZ80 opcode include source file                                              */
-/* C Z80 emulator version 0.9                                                   */
-/* Copyright 2004-2005 StÑéhane Dallongeville                                   */
-/*                                                                              */
-/********************************************************************************/
+/******************************************************************************
+ *
+ * CZ80 opcode include source file
+ * CZ80 emulator version 0.9
+ * Copyright 2004-2005 Stéphane Dallongeville
+ *
+ * (Modified by NJ)
+ *
+ *****************************************************************************/
 
 #if CZ80_USE_JUMPTABLE
 	goto *JumpTable[Opcode];
@@ -96,7 +98,7 @@ OP_LD_R_R:
 	OP(0x2e):   // LD   L,#imm
 	OP(0x3e):   // LD   A,#imm
 OP_LD_R_imm:
-		zR8(Opcode >> 3) = FETCH_BYTE;
+		zR8(Opcode >> 3) = READ_ARG();
 		RET(7)
 
 	OP(0x46):   // LD   B,(HL)
@@ -106,7 +108,7 @@ OP_LD_R_imm:
 	OP(0x66):   // LD   H,(HL)
 	OP(0x6e):   // LD   L,(HL)
 	OP(0x7e):   // LD   A,(HL)
-		READ_BYTE(zHL, zR8((Opcode >> 3) & 7))
+		zR8((Opcode >> 3) & 7) = READ_MEM8(zHL);
 		RET(7)
 
 	OP(0x70):   // LD   (HL),B
@@ -116,11 +118,11 @@ OP_LD_R_imm:
 	OP(0x74):   // LD   (HL),H
 	OP(0x75):   // LD   (HL),L
 	OP(0x77):   // LD   (HL),A
-		WRITE_BYTE(zHL, zR8(Opcode & 7))
+		WRITE_MEM8(zHL, zR8(Opcode & 7));
 		RET(7)
 
 	OP(0x36):   // LD (HL), #imm
-		WRITE_BYTE(zHL, FETCH_BYTE)
+		WRITE_MEM8(zHL, READ_ARG());
 		RET(10)
 
 	OP(0x0a):   // LD   A,(BC)
@@ -133,13 +135,13 @@ OP_LOAD_A_mDE:
 		adr = zDE;
 
 OP_LOAD_A_mxx:
-		READ_BYTE(adr, zA)
+		zA = READ_MEM8(adr);
 		RET(7)
 
 	OP(0x3a):   // LD   A,(nn)
 OP_LOAD_A_mNN:
-		FETCH_WORD(adr)
-		READ_BYTE(adr, zA)
+		adr = READ_ARG16();
+		zA = READ_MEM8(adr);
 		RET(13)
 
 	OP(0x02):   // LD   (BC),A
@@ -152,13 +154,13 @@ OP_LOAD_mDE_A:
 		adr = zDE;
 
 OP_LOAD_mxx_A:
-		WRITE_BYTE(adr, zA)
+		WRITE_MEM8(adr, zA);
 		RET(7)
 
 	OP(0x32):   // LD   (nn),A
 OP_LOAD_mNN_A:
-		FETCH_WORD(adr)
-		WRITE_BYTE(adr, zA)
+		adr = READ_ARG16();
+		WRITE_MEM8(adr, zA);
 		RET(13)
 
 /*-----------------------------------------
@@ -169,12 +171,12 @@ OP_LOAD_mNN_A:
 	OP(0x11):   // LD   DE,nn
 	OP(0x21):   // LD   HL,nn
 OP_LOAD_RR_imm16:
-		FETCH_WORD(zR16(Opcode >> 4))
+		zR16(Opcode >> 4) = READ_ARG16();
 		RET(10)
 
 	OP(0x31):   // LD   SP,nn
 OP_LOAD_SP_imm16:
-		FETCH_WORD(zSP)
+		zSP = READ_ARG16();
 		RET(10)
 
 	OP(0xf9):   // LD   SP,HL
@@ -184,14 +186,14 @@ OP_LD_SP_xx:
 
 	OP(0x2a):   // LD   HL,(nn)
 OP_LD_xx_mNN:
-		FETCH_WORD(adr)
-		READ_WORD(adr, data->W)
+		adr = READ_ARG16();
+		data->W = READ_MEM16(adr);
 		RET(16)
 
 	OP(0x22):   // LD   (nn),HL
 OP_LD_mNN_xx:
-		FETCH_WORD(adr)
-		WRITE_WORD(adr, data->W)
+		adr = READ_ARG16();
+		WRITE_MEM16(adr, data->W);
 		RET(16)
 
 /*-----------------------------------------
@@ -202,7 +204,7 @@ OP_LD_mNN_xx:
 	OP(0xd1):   // POP  DE
 	OP(0xf1):   // POP  AF
 OP_POP_RR:
-		data = pzR16[(Opcode >> 4) & 3];
+		data = CPU->pzR16[(Opcode >> 4) & 3];
 
 	OP(0xe1):   // POP  HL
 OP_POP:
@@ -217,7 +219,7 @@ OP_POP:
 	OP(0xd5):   // PUSH DE
 	OP(0xf5):   // PUSH AF
 OP_PUSH_RR:
-		data = pzR16[(Opcode >> 4) & 3];
+		data = CPU->pzR16[(Opcode >> 4) & 3];
 
 	OP(0xe5):   // PUSH HL
 OP_PUSH:
@@ -259,8 +261,8 @@ OP_EXX:
 OP_EX_xx_mSP:
 		adr = zSP;
 		res = data->W;
-		READ_WORD(adr, data->W)
-		WRITE_WORD(adr, res)
+		data->W = READ_MEM16(adr);
+		WRITE_MEM16(adr, res);
 		RET(19)
 
 /*-----------------------------------------
@@ -283,10 +285,10 @@ OP_INC_R:
 		adr = zHL;
 
 OP_INC_m:
-		READ_BYTE(adr, res)
+		res = READ_MEM8(adr);
 		res = (res + 1) & 0xff;
 		zF = (zF & CF) | SZHV_inc[res];
-		WRITE_BYTE(adr, res)
+		WRITE_MEM8(adr, res);
 		RET(11)
 
 /*-----------------------------------------
@@ -309,10 +311,10 @@ OP_DEC_R:
 		adr = zHL;
 
 OP_DEC_m:
-		READ_BYTE(adr, res)
+		res = READ_MEM8(adr);
 		res = (res - 1) & 0xff;
 		zF = (zF & CF) | SZHV_dec[res];
-		WRITE_BYTE(adr, res)
+		WRITE_MEM8(adr, res);
 		RET(11)
 
 /*-----------------------------------------
@@ -320,13 +322,13 @@ OP_DEC_m:
 -----------------------------------------*/
 
 	OP(0x86):   // ADD  A,(HL)
-		READ_BYTE(zHL, val)
+		val = READ_MEM8(zHL);
 		USE_CYCLES(3)
 		goto OP_ADD;
 
 	OP(0xc6):   // ADD  A,n
 OP_ADD_imm:
-		val = FETCH_BYTE;
+		val = READ_ARG();
 		USE_CYCLES(3)
 		goto OP_ADD;
 
@@ -343,14 +345,14 @@ OP_ADD_R:
 OP_ADD:
 #if CZ80_BIG_FLAGS_ARRAY
 		{
-			u16 A = zA;
-			res = (u8)(A + val);
+			UINT16 A = zA;
+			res = (UINT8)(A + val);
 			zF = SZHVC_add[(A << 8) | res];
 			zA = res;
 		}
 #else
 		res = zA + val;
-		zF = SZ[(u8)res] | ((res >> 8) & CF) |
+		zF = SZ[(UINT8)res] | ((res >> 8) & CF) |
 			((zA ^ res ^ val) & HF) |
 			(((val ^ zA ^ 0x80) & (val ^ res) & 0x80) >> 5);
 		zA = res;
@@ -362,13 +364,13 @@ OP_ADD:
 -----------------------------------------*/
 
 	OP(0x8e):   // ADC  A,(HL)
-		READ_BYTE(zHL, val)
+		val = READ_MEM8(zHL);
 		USE_CYCLES(3)
 		goto OP_ADC;
 
 	OP(0xce):   // ADC  A,n
 OP_ADC_imm:
-		val = FETCH_BYTE;
+		val = READ_ARG();
 		USE_CYCLES(3)
 		goto OP_ADC;
 
@@ -385,9 +387,9 @@ OP_ADC_R:
 OP_ADC:
 #if CZ80_BIG_FLAGS_ARRAY
 		{
-			u8 A = zA;
-			u8 c = zF & CF;
-			res = (u8)(A + val + c);
+			UINT8 A = zA;
+			UINT8 c = zF & CF;
+			res = (UINT8)(A + val + c);
 			zF = SZHVC_add[(c << 16) | (A << 8) | res];
 			zA = res;
 		}
@@ -405,13 +407,13 @@ OP_ADC:
 -----------------------------------------*/
 
 	OP(0x96):   // SUB  (HL)
-		READ_BYTE(zHL, val)
+		val = READ_MEM8(zHL);
 		USE_CYCLES(3)
 		goto OP_SUB;
 
 	OP(0xd6):   // SUB  A,n
 OP_SUB_imm:
-		val = FETCH_BYTE;
+		val = READ_ARG();
 		USE_CYCLES(3)
 		goto OP_SUB;
 
@@ -428,8 +430,8 @@ OP_SUB_R:
 OP_SUB:
 #if CZ80_BIG_FLAGS_ARRAY
 		{
-			u8 A = zA;
-			res = (u8)(A - val);
+			UINT8 A = zA;
+			res = (UINT8)(A - val);
 			zF = SZHVC_sub[(A << 8) | res];
 			zA = res;
 		}
@@ -447,13 +449,13 @@ OP_SUB:
 -----------------------------------------*/
 
 	OP(0x9e):   // SBC  A,(HL)
-		READ_BYTE(zHL, val)
+		val = READ_MEM8(zHL);
 		USE_CYCLES(3)
 		goto OP_SBC;
 
 	OP(0xde):   // SBC  A,n
 OP_SBC_imm:
-		val = FETCH_BYTE;
+		val = READ_ARG();
 		USE_CYCLES(3)
 		goto OP_SBC;
 
@@ -470,9 +472,9 @@ OP_SBC_R:
 OP_SBC:
 #if CZ80_BIG_FLAGS_ARRAY
 		{
-			u8 A = zA;
-			u8 c = zF & CF;
-			res = (u8)(A - val - c);
+			UINT8 A = zA;
+			UINT8 c = zF & CF;
+			res = (UINT8)(A - val - c);
 			zF = SZHVC_sub[(c << 16) | (A << 8) | res];
 			zA = res;
 		}
@@ -490,13 +492,13 @@ OP_SBC:
 -----------------------------------------*/
 
 	OP(0xbe):   // CP   (HL)
-		READ_BYTE(zHL, val)
+		val = READ_MEM8(zHL);
 		USE_CYCLES(3)
 		goto OP_CP;
 
 	OP(0xfe):   // CP   n
 OP_CP_imm:
-		val = FETCH_BYTE;
+		val = READ_ARG();
 		USE_CYCLES(3)
 		goto OP_CP;
 
@@ -513,8 +515,8 @@ OP_CP_R:
 OP_CP:
 #if CZ80_BIG_FLAGS_ARRAY
 		{
-			u8 A = zA;
-			res = (u8)(A - val);
+			UINT8 A = zA;
+			res = (UINT8)(A - val);
 			zF = (SZHVC_sub[(A << 8) | res] & ~(YF | XF)) |
 				 (val & (YF | XF));
 		}
@@ -532,13 +534,13 @@ OP_CP:
 -----------------------------------------*/
 
 	OP(0xa6):   // AND  (HL)
-		READ_BYTE(zHL, val)
+		val = READ_MEM8(zHL);
 		USE_CYCLES(3)
 		goto OP_AND;
 
 	OP(0xe6):   // AND  A,n
 OP_AND_imm:
-		val = FETCH_BYTE;
+		val = READ_ARG();
 		USE_CYCLES(3)
 		goto OP_AND;
 
@@ -562,13 +564,13 @@ OP_AND:
 -----------------------------------------*/
 
 	OP(0xae):   // XOR  (HL)
-		READ_BYTE(zHL, val)
+		val = READ_MEM8(zHL);
 		USE_CYCLES(3)
 		goto OP_XOR;
 
 	OP(0xee):   // XOR  A,n
 OP_XOR_imm:
-		val = FETCH_BYTE;
+		val = READ_ARG();
 		USE_CYCLES(3)
 		goto OP_XOR;
 
@@ -592,13 +594,13 @@ OP_XOR:
 -----------------------------------------*/
 
 	OP(0xb6):   // OR   (HL)
-		READ_BYTE(zHL, val)
+		val = READ_MEM8(zHL);
 		USE_CYCLES(3)
 		goto OP_OR;
 
 	OP(0xf6):   // OR   A,n
 OP_OR_imm:
-		val = FETCH_BYTE;
+		val = READ_ARG();
 		USE_CYCLES(3)
 		goto OP_OR;
 
@@ -624,8 +626,8 @@ OP_OR:
 	OP(0x27):   // DAA
 OP_DAA:
 	{
-		u8 F;
-		u8 cf, nf, hf, lo, hi, diff;
+		UINT8 F;
+		UINT8 cf, nf, hf, lo, hi, diff;
 
 		F = zF;
 		cf = F & CF;
@@ -685,7 +687,7 @@ OP_CCF:
 	OP(0x76):   // HALT
 OP_HALT:
 		CPU->HaltState = 1;
-		z80_ICount = 0;
+		CPU->ICount = 0;
 		goto Cz80_Check_Interrupt;
 
 	OP(0xf3):   // DI
@@ -699,7 +701,7 @@ OP_EI:
 		if (!zIFF1)
 		{
 			zIFF1 = zIFF2 = (1 << 2);
-			while (GET_BYTE == 0xfb)
+			while (GET_OP() == 0xfb)
 			{
 				USE_CYCLES(4)
 				PC++;
@@ -709,9 +711,11 @@ OP_EI:
 			}
 			if (CPU->IRQState)
 			{
-				z80_ExtraCycles = z80_ICount - 1;
-				z80_ICount = 1;
 				afterEI = 1;
+			}
+			if (CPU->ICount <= 0)
+			{
+				CPU->ICount = 1;
 			}
 		}
 		else zIFF2 = (1 << 2);
@@ -793,7 +797,7 @@ OP_ADD16:
 		zF = (zF & (SF | ZF | VF)) |
 			(((data->W ^ res ^ val) >> 8) & HF) |
 			((res >> 16) & CF) | ((res >> 8) & (YF | XF));
-		data->W = (u16)res;
+		data->W = (UINT16)res;
 		RET(11)
 
 /*-----------------------------------------
@@ -801,8 +805,8 @@ OP_ADD16:
 -----------------------------------------*/
 
 	{
-		u8 A;
-		u8 F;
+		UINT8 A;
+		UINT8 F;
 
 	OP(0x07):   // RLCA
 OP_RLCA:
@@ -843,7 +847,7 @@ OP_RRA:
 
 	OP(0xc3):   // JP   nn
 OP_JP:
-		res = GET_WORD;
+		res = READ_ARG16();
 		SET_PC(res);
 		RET(10)
 
@@ -914,7 +918,7 @@ OP_DJNZ:
 
 	OP(0x18):   // JR   n
 OP_JR:
-		adr = FETCH_BYTE_S;
+		adr = (INT8)READ_ARG();
 		PC += adr;
 		RET(12)
 
@@ -948,7 +952,7 @@ OP_JR_NC:
 
 	OP(0xcd):   // CALL nn
 OP_CALL:
-		FETCH_WORD(res);
+		res = READ_ARG16();
 		val = zRealPC;
 		PUSH_16(val);
 		SET_PC(res);
@@ -1080,8 +1084,8 @@ OP_RST:
 
 	OP(0xd3):   // OUT  (n),A
 OP_OUT_mN_A:
-		adr = (zA << 8) | FETCH_BYTE;
-		OUT(adr, zA)
+		adr = (zA << 8) | READ_ARG();
+		OUT(adr, zA);
 		RET(11)
 
 /*-----------------------------------------
@@ -1090,8 +1094,8 @@ OP_OUT_mN_A:
 
 	OP(0xdb):   // IN   A,(n)
 OP_IN_A_mN:
-		adr = (zA << 8) | FETCH_BYTE;
-		IN(adr, zA)
+		adr = (zA << 8) | READ_ARG();
+		zA = IN(adr);
 		RET(11)
 
 /*-----------------------------------------
@@ -1100,10 +1104,10 @@ OP_IN_A_mN:
 
 	OP(0xcb):   // CB prefix (BIT & SHIFT INSTRUCTIONS)
 	{
-		u8 src;
-		u8 res;
+		UINT8 src;
+		UINT8 res;
 
-		Opcode = FETCH_BYTE;
+		Opcode = READ_OP();
 #if CZ80_EMULATE_R_EXACTLY
 		zR++;
 #endif
@@ -1113,7 +1117,7 @@ OP_IN_A_mN:
 	OP(0xed):   // ED prefix
 ED_PREFIX:
 		USE_CYCLES(4)
-		Opcode = FETCH_BYTE;
+		Opcode = READ_OP();
 #if CZ80_EMULATE_R_EXACTLY
 		zR++;
 #endif
@@ -1130,12 +1134,12 @@ FD_PREFIX:
 
 XY_PREFIX:
 		USE_CYCLES(4)
-		Opcode = FETCH_BYTE;
+		Opcode = READ_OP();
 #if CZ80_EMULATE_R_EXACTLY
 		zR++;
 #endif
 		#include "cz80_opXY.c"
 
-#if (CZ80_USE_JUMPTABLE == 0)
+#if !CZ80_USE_JUMPTABLE
 }
 #endif

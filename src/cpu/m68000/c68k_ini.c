@@ -1,10 +1,16 @@
-#include "c68k.h"
+/******************************************************************************
+
+	c68k_ini.c
+
+	C68K opcodeジャンプテーブル生成
+
+******************************************************************************/
 
 	typedef struct
 	{
 		void *label; /* opcode label */
-		u16  mask;   /* mask on opcode */
-		u16  match;  /* what to match after masking */
+		UINT16  mask;   /* mask on opcode */
+		UINT16  match;  /* what to match after masking */
 	} opcode_struct;
 
 	opcode_struct c68k_opcode_jump_table[] =
@@ -1694,6 +1700,12 @@
 		{&&op_ror_16_al        , 0xffff, 0xe6f9},
 		{&&op_rol_16_aw        , 0xffff, 0xe7f8},
 		{&&op_rol_16_al        , 0xffff, 0xe7f9},
+
+#ifdef BUILD_NCDZPSP
+		{&&op_FAC0             , 0xffff, 0xfac0},
+		{&&op_FAC1             , 0xffff, 0xfac1},
+		{&&op_FAC2             , 0xffff, 0xfac2},
+#endif /* BUILD_NCDZPSP */
 
 		{&&op_illegal          , 0x0000, 0x0000}
 	};

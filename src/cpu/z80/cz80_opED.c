@@ -1,10 +1,12 @@
-/********************************************************************************/
-/*                                                                              */
-/* CZ80 ED opcode include source file                                           */
-/* C Z80 emulator version 0.9                                                   */
-/* Copyright 2004-2005 StÑéhane Dallongeville                                   */
-/*                                                                              */
-/********************************************************************************/
+/******************************************************************************
+ *
+ * CZ80 ED opcode include source file
+ * CZ80 emulator version 0.9
+ * Copyright 2004-2005 Stéphane Dallongeville
+ *
+ * (Modified by NJ)
+ *
+ *****************************************************************************/
 
 #if CZ80_USE_JUMPTABLE
 	goto *JumpTableED[Opcode];
@@ -223,7 +225,7 @@ switch (Opcode)
 #if CZ80_EMULATE_R_EXACTLY
 		zR = zA;
 #else
-		zR = zA - ((cycles - z80_ICount) >> 2);
+		zR = zA - ((cycles - CPU->ICount) >> 2);
 #endif
 		zR2 = zA & 0x80;
 		RET(5)
@@ -237,7 +239,7 @@ switch (Opcode)
 #if CZ80_EMULATE_R_EXACTLY
 		zA = (zR & 0x7f) | zR2;
 #else
-		zA = ((zR + ((cycles - z80_ICount) >> 2)) & 0x7f) | zR2;
+		zA = ((zR + ((cycles - CPU->ICount) >> 2)) & 0x7f) | zR2;
 #endif
 		zF = (zF & CF) | SZ[zA] | zIFF2;
 		RET(5)
@@ -290,20 +292,9 @@ switch (Opcode)
 	OPED(0x6c): // NEG
 	OPED(0x74): // NEG
 	OPED(0x7c): // NEG
-#if CZ80_BIG_FLAGS_ARRAY
-		res = (u8)(0 - val);
-		zF = SZHVC_sub[res];
-		zA = res;
-#else
 		val = zA;
-		res = 0 - val;
 		zA = 0;
-		zF = SZ[res & 0xff] | ((res >> 8) & CF) | NF |
-			((zA ^ res ^ val) & HF) |
-			(((val ^ zA) & (zA ^ res) & 0x80) >> 5);
-		zA = res;
-#endif
-		RET(4)
+		goto OP_SUB;
 
 /*-----------------------------------------
  RRD
@@ -311,8 +302,8 @@ switch (Opcode)
 
 	OPED(0x67): // RRD  (HL)
 		adr = zHL;
-		READ_BYTE(adr, val)
-		WRITE_BYTE(adr, (val >> 4) | (zA << 4))
+		val = READ_MEM8(adr);
+		WRITE_MEM8(adr, (val >> 4) | (zA << 4));
 		zA = (zA & 0xf0) | (val & 0x0f);
 		zF = (zF & CF) | SZP[zA];
 		RET(14)
@@ -323,8 +314,8 @@ switch (Opcode)
 
 	OPED(0x6f): // RLD  (HL)
 		adr = zHL;
-		READ_BYTE(adr, val)
-		WRITE_BYTE(adr, (val << 4) | (zA & 0x0F))
+		val = READ_MEM8(adr);
+		WRITE_MEM8(adr, (val << 4) | (zA & 0x0f));
 		zA = (zA & 0xf0) | (val >> 4);
 		zF = (zF & CF) | SZP[zA];
 		RET(14)
@@ -349,7 +340,7 @@ OP_ADC16:
 			((res >> 8) & (SF | YF | XF)) |
 			((res & 0xffff) ? 0 : ZF) |
 			(((val ^ zHL ^ 0x8000) & (val ^ res) & 0x8000) >> 13);
-		zHL = (u16)res;
+		zHL = (UINT16)res;
 		RET(11)
 
 /*-----------------------------------------
@@ -372,7 +363,7 @@ OP_SBC16:
 			((res >> 8) & (SF | YF | XF)) |
 			((res & 0xffff) ? 0 : ZF) |
 			(((val ^ zHL) & (zHL ^ res) & 0x8000) >> 13);
-		zHL = (u16)res;
+		zHL = (UINT16)res;
 		RET(11)
 
 /*-----------------------------------------
@@ -386,13 +377,13 @@ OP_SBC16:
 	OPED(0x60): // IN   H,(C)
 	OPED(0x68): // IN   L,(C)
 	OPED(0x78): // IN   E,(C)
-		IN(zBC, res);
+		res = IN(zBC);
 		zR8((Opcode >> 3) & 7) = res;
 		zF = (zF & CF) | SZP[res];
 		RET(8)
 
 	OPED(0x70): // IN   0,(C)
-		IN(zBC, res);
+		res = IN(zBC);
 		zF = (zF & CF) | SZP[res];
 		RET(8)
 
@@ -445,7 +436,6 @@ OP_SBC16:
 	OPED(0x5d): // RETI
 	OPED(0x6d): // RETI
 	OPED(0x7d): // RETI
-//		if (CPU->RETI_Callback) CPU->RETI_Callback();
 		POP_16(res);
 		SET_PC(res);
 		RET(10)
@@ -472,22 +462,22 @@ OP_SBC16:
 		RET(4)
 
 	{
-		u8 val;
-		u8 res;
-		u8 F;
+		UINT8 val;
+		UINT8 res;
+		UINT8 F;
 
 /*-----------------------------------------
  LDI/LDD
 -----------------------------------------*/
 
 	OPED(0xa0): // LDI
-		READ_BYTE(zHL++, val)
-		WRITE_BYTE(zDE++, val)
+		val = READ_MEM8(zHL++);
+		WRITE_MEM8(zDE++, val);
 		goto OP_LDX;
 
 	OPED(0xa8): // LDD
-		READ_BYTE(zHL--, val)
-		WRITE_BYTE(zDE--, val)
+		val = READ_MEM8(zHL--);
+		WRITE_MEM8(zDE--, val);
 
 OP_LDX:
 		F = zF & (SF | ZF | CF);
@@ -502,25 +492,23 @@ OP_LDX:
 -----------------------------------------*/
 
 	OPED(0xb0): // LDIR
-		ADD_CYCLES(4)
 		do
 		{
-			READ_BYTE(zHL++, val)
-			WRITE_BYTE(zDE++, val)
+			val = READ_MEM8(zHL++);
+			WRITE_MEM8(zDE++, val);
 			zBC--;
-			USE_CYCLES(21)
-		} while (zBC && (z80_ICount > 0));
+			USE_CYCLES(17)
+		} while (zBC && (CPU->ICount > 0));
 		goto OP_LDXR;
 
 	OPED(0xb8): // LDDR
-		ADD_CYCLES(4)
 		do
 		{
-			READ_BYTE(zHL--, val)
-			WRITE_BYTE(zDE--, val)
+			val = READ_MEM8(zHL--);
+			WRITE_MEM8(zDE--, val);
 			zBC--;
-			USE_CYCLES(21)
-		} while (zBC && (z80_ICount > 0));
+			USE_CYCLES(17)
+		} while (zBC && (CPU->ICount > 0));
 
 OP_LDXR:
 		F = zF & (SF | ZF | CF);
@@ -544,11 +532,11 @@ OP_LDXR:
 -----------------------------------------*/
 
 	OPED(0xa1): // CPI
-		READ_BYTE(zHL++, val)
+		val = READ_MEM8(zHL++);
 		goto OP_CPX;
 
 	OPED(0xa9): // CPD
-		READ_BYTE(zHL--, val)
+		val = READ_MEM8(zHL--);
 
 OP_CPX:
 		res = zA - val;
@@ -565,41 +553,45 @@ OP_CPX:
 -----------------------------------------*/
 
 	OPED(0xb1): // CPIR
-		ADD_CYCLES(4)
 		do
 		{
-			READ_BYTE(zHL++, val)
+			val = READ_MEM8(zHL++);
 			res = zA - val;
 			zBC--;
-			USE_CYCLES(21)
-		} while (zBC && res && (z80_ICount > 0));
+			F = (zF & CF) | (SZ[res] & ~(YF | XF)) | ((zA ^ val ^ res) & HF) | NF;
+			if (F & HF) res--;
+			if (res & 0x02) F |= YF;
+			if (res & 0x08) F |= XF;
+			if (zBC) F |= VF;
+			zF = F;
+			USE_CYCLES(17)
+		} while (zBC && !(F & ZF) && (CPU->ICount > 0));
 		goto OP_CPXR;
 
 	OPED(0xb9): // CPDR
-		ADD_CYCLES(4)
 		do
 		{
-			READ_BYTE(zHL--, val)
+			val = READ_MEM8(zHL--);
 			res = zA - val;
 			zBC--;
-			USE_CYCLES(21)
-		} while (zBC && res && (z80_ICount > 0));
+			F = (zF & CF) | (SZ[res] & ~(YF | XF)) | ((zA ^ val ^ res) & HF) | NF;
+			if (F & HF) res--;
+			if (res & 0x02) F |= YF;
+			if (res & 0x08) F |= XF;
+			if (zBC) F |= VF;
+			zF = F;
+			USE_CYCLES(17)
+		} while (zBC && !(F & ZF) && (CPU->ICount > 0));
 
 OP_CPXR:
-		F = (zF & CF) | (SZ[res] & ~(YF | XF)) | ((zA ^ val ^ res) & HF) | NF;
-		if (F & HF) res--;
-		if (res & 0x02) F |= YF;
-		if (res & 0x08) F |= XF;
-		if (zBC)
+		if (zBC && !(F & ZF))
 		{
-			zF = F | VF;
 			PC -= 2;
 #if CZ80_EMULATE_R_EXACTLY
 			zR--;
 #endif
 			goto Cz80_Exec_End;
 		}
-		zF = F;
 		ADD_CYCLES(5)
 		goto Cz80_Exec;
 
@@ -608,22 +600,22 @@ OP_CPXR:
 -----------------------------------------*/
 
 	OPED(0xa2): // INI
-		IN(zBC, val)
+		val = IN(zBC);
 		zB--;
-		WRITE_BYTE(zHL++, val)
+		WRITE_MEM8(zHL++, val);
 		goto OP_INX;
 
 	OPED(0xaa): // IND
-		IN(zBC, val)
+		val = IN(zBC);
 		zB--;
-		WRITE_BYTE(zHL--, val)
+		WRITE_MEM8(zHL--, val);
 
 OP_INX:
 		F = SZ[zB];
-		res = ((u32)(zC - 1) & 0xff) + (u32)val;
+		res = ((UINT32)(zC - 1) & 0xff) + (UINT32)val;
 		if (val & SF) F |= NF;
 		if (res & 0x100) F |= HF | CF;
-		F |= SZP[(u8)(res & 0x07) ^ zB] & PF;
+		F |= SZP[(UINT8)(res & 0x07) ^ zB] & PF;
 		zF = F;
 		RET(12)
 
@@ -632,32 +624,30 @@ OP_INX:
 -----------------------------------------*/
 
 	OPED(0xb2): // INIR
-		ADD_CYCLES(4)
 		do
 		{
-			IN(zBC, val)
+			val = IN(zBC);
 			zB--;
-			WRITE_BYTE(zHL++, val)
-			USE_CYCLES(21)
-		} while (zB && (z80_ICount > 0));
+			WRITE_MEM8(zHL++, val);
+			USE_CYCLES(17)
+		} while (zB && (CPU->ICount > 0));
 		goto OP_INXR;
 
 	OPED(0xba): // INDR
-		ADD_CYCLES(4)
 		do
 		{
-			IN(zBC, val)
+			val = IN(zBC);
 			zB--;
-			WRITE_BYTE(zHL--, val)
-			USE_CYCLES(21)
-		} while (zB && (z80_ICount > 0));
+			WRITE_MEM8(zHL--, val);
+			USE_CYCLES(17)
+		} while (zB && (CPU->ICount > 0));
 
 OP_INXR:
 		F = SZ[zB];
-		res = ((u32)(zC - 1) & 0xff) + (u32)val;
+		res = ((UINT32)(zC - 1) & 0xff) + (UINT32)val;
 		if (val & SF) F |= NF;
 		if (res & 0x100) F |= HF | CF;
-		F |= SZP[(u8)(res & 0x07) ^ zB] & PF;
+		F |= SZP[(UINT8)(res & 0x07) ^ zB] & PF;
 		zF = F;
 		if (zB)
 		{
@@ -675,22 +665,22 @@ OP_INXR:
 -----------------------------------------*/
 
 	OPED(0xa3): // OUTI
-		READ_BYTE(zHL++, val)
+		val = READ_MEM8(zHL++);
 		zB--;
-		OUT(zBC, val)
+		OUT(zBC, val);
 		goto OP_OUTX;
 
 	OPED(0xab): // OUTD
-		READ_BYTE(zHL--, val)
+		val = READ_MEM8(zHL--);
 		zB--;
-		OUT(zBC, val)
+		OUT(zBC, val);
 
 OP_OUTX:
 		F = SZ[zB];
-		res = (u32)zL + (u32)val;
+		res = (UINT32)zL + (UINT32)val;
 		if (val & SF) F |= NF;
 		if (res & 0x100) F |= HF | CF;
-		F |= SZP[(u8)(res & 0x07) - zB] & PF;
+		F |= SZP[(UINT8)(res & 0x07) - zB] & PF;
 		zF = F;
 		RET(12)
 
@@ -699,32 +689,30 @@ OP_OUTX:
 -----------------------------------------*/
 
 	OPED(0xb3): // OTIR
-		ADD_CYCLES(4)
 		do
 		{
-			READ_BYTE(zHL++, val)
+			val = READ_MEM8(zHL++);
 			zB--;
-			OUT(zBC, val)
-			USE_CYCLES(21)
-		} while (zB && (z80_ICount > 0));
+			OUT(zBC, val);
+			USE_CYCLES(17)
+		} while (zB && (CPU->ICount > 0));
 		goto OP_OTXR;
 
 	OPED(0xbb): // OTDR
-		ADD_CYCLES(4)
 		do
 		{
-			READ_BYTE(zHL--, val)
+			val = READ_MEM8(zHL--);
 			zB--;
-			OUT(zBC, val)
-			USE_CYCLES(21)
-		} while (zB && (z80_ICount > 0));
+			OUT(zBC, val);
+			USE_CYCLES(17)
+		} while (zB && (CPU->ICount > 0));
 
 OP_OTXR:
 		F = SZ[zB];
-		res = (u32)zL + (u32)val;
+		res = (UINT32)zL + (UINT32)val;
 		if (val & SF) F |= NF;
 		if (res & 0x100) F |= HF | CF;
-		F |= SZP[(u8)(res & 0x07) - zB] & PF;
+		F |= SZP[(UINT8)(res & 0x07) - zB] & PF;
 		zF = F;
 		if (zB)
 		{
@@ -738,6 +726,6 @@ OP_OTXR:
 		goto Cz80_Exec;
 	}
 
-#if (CZ80_USE_JUMPTABLE == 0)
+#if !CZ80_USE_JUMPTABLE
 }
 #endif

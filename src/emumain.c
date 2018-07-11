@@ -13,6 +13,8 @@
 #include <SDL.h>
 #include <windows.h>
 
+SDL_Surface* real_screen;
+
 #define EMULATOR_TITLE      "CPS2EMU for GCW0"
 #define FRAMESKIP_LEVELS    12
 #define TICKS_PER_SEC       1000000UL
@@ -120,6 +122,9 @@ static int joy_count = 0;
 static u16 *screen = NULL;
 int screen_mode = 0;
 
+uint32_t y, x;
+uint32_t *s;
+uint32_t *d;
 
 /******************************************************************************
 	Prototype
@@ -243,8 +248,8 @@ int main(int argc, char *argv[])
 	atexit (Terminate);
 
 	memset(game_name, 0, sizeof(game_name));
-	option_sound_enable = 0;
-	option_samplerate = 1;
+	option_sound_enable = 1;
+	option_samplerate = 0;
 	option_sound_volume = 50;
 	option_controller = INPUT_PLAYER1;
 	option_speedlimit = 1;
@@ -273,6 +278,11 @@ int main(int argc, char *argv[])
 		exit (1);
 	}
 
+#ifdef RS97
+	real_screen = SDL_SetVideoMode (320, 480, 16, SDL_HWSURFACE
+	);
+	screen_surface = SDL_CreateRGBSurface(SDL_HWSURFACE, 320, 240, 16, 0,0,0,0);
+#else
 	screen_surface = SDL_SetVideoMode (320, 240, 16, SDL_HWSURFACE
 	#ifdef SDL_TRIPLEBUF
 	 | SDL_TRIPLEBUF
@@ -280,6 +290,8 @@ int main(int argc, char *argv[])
 	 | SDL_DOUBLEBUF
 	#endif
 	);
+#endif
+	SDL_ShowCursor(SDL_DISABLE);
 	if (screen_surface == NULL) {
 		fprintf (stderr, "Couldn't set video mode: %s\n", SDL_GetError ());
 		exit (2);
@@ -511,9 +523,25 @@ void update_screen(void)
 			memset(src, 0, BUF_WIDTH * 32 * 2);
 		}
 
+#ifdef RS97
+		s = (uint32_t*)screen_surface->pixels;
+		d = (uint32_t*)real_screen->pixels;
+		for(y=0; y<240; y++)
+		{
+			for(x=0; x<160; x++)
+			{
+				*d++ = *s++;
+			}
+			d+= 160;
+		}
+		SDL_UnlockSurface(screen_surface);
+		screen = NULL;
+		SDL_Flip(real_screen);
+#else
 		SDL_UnlockSurface(screen_surface);
 		screen = NULL;
 		SDL_Flip(screen_surface);
+#endif
 
 		curr = get_ticks();
 
@@ -601,7 +629,7 @@ void update_screen(void)
 		menu_on();
 		autoframeskip_reset();
 	}
-/*
+
 	if(state_slot != -1) {
 		if(state_slot < 0x10) {
 			state_save(state_slot & 0x0f);
@@ -611,7 +639,6 @@ void update_screen(void)
 		autoframeskip_reset();
 		state_slot = -1;
 	}
-*/
 }
 
 
@@ -739,7 +766,21 @@ static void clean_msg()
 	}
 	SDL_Rect r = {0, 232, 320, 8};
 	SDL_FillRect(screen_surface, &r, 0x0000);
+#ifdef RS97
+	s = (uint32_t*)screen_surface->pixels;
+	d = (uint32_t*)real_screen->pixels;
+	for(y=0; y<240; y++)
+	{
+		for(x=0; x<160; x++)
+		{
+			*d++ = *s++;
+		}
+		d+= 160;
+	}
+	SDL_Flip(real_screen);
+#else
 	SDL_Flip(screen_surface);
+#endif
 }
 
 void msg_printf(const char *text, ...)
@@ -797,8 +838,22 @@ void msg_printf(const char *text, ...)
 		p = draw_text(p, 0, y, 0xBDF7, -1);
 		y += 8;
 	} while(*p && (msg_line != -1));
-
+	
+#ifdef RS97
+	s = (uint32_t*)screen_surface->pixels;
+	d = (uint32_t*)real_screen->pixels;
+	for(y=0; y<240; y++)
+	{
+		for(x=0; x<160; x++)
+		{
+			*d++ = *s++;
+		}
+		d+= 160;
+	}
+	SDL_Flip(real_screen);
+#else
 	SDL_Flip(screen_surface);
+#endif
 }
 
 void button_wait()
@@ -944,9 +999,21 @@ void menu_display(void)
 			msg_printf("Button : Select\n");
 			break;
 	}
-
-
-	SDL_Flip(screen_surface);
+#ifdef RS97
+		s = (uint32_t*)screen_surface->pixels;
+		d = (uint32_t*)real_screen->pixels;
+		for(y=0; y<240; y++)
+		{
+			for(x=0; x<160; x++)
+			{
+				*d++ = *s++;
+			}
+			d+= 160;
+		}
+		SDL_Flip(real_screen);
+#else
+		SDL_Flip(screen_surface);
+#endif
 }
 
 enum {
@@ -1087,8 +1154,8 @@ void menu_on(void)
 
 		if(change & btn & BTN(MENU_SELECT)) {
 			switch(menu_cursor) {
-				/*case MENU_SAVE: state_save(state_slot); break;
-				case MENU_LOAD: if(state_load(state_slot)) menu_do = 0; break;*/
+				case MENU_SAVE: state_save(state_slot); break;
+				case MENU_LOAD: if(state_load(state_slot)) menu_do = 0; break;
 				case MENU_SERVICE: service_mode = 1; menu_do = 0; break;
 				case MENU_USBREFRESH: open_joystick(); break;
 				case MENU_RESET: Loop = LOOP_RESET; menu_do = 0; break;

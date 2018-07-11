@@ -1,10 +1,12 @@
-/********************************************************************************/
-/*                                                                              */
-/* CZ80 XY opcode include source file                                           */
-/* C Z80 emulator version 0.9                                                   */
-/* Copyright 2004-2005 StÑéhane Dallongeville                                   */
-/*                                                                              */
-/********************************************************************************/
+/******************************************************************************
+ *
+ * CZ80 XY opcode include source file
+ * CZ80 emulator version 0.9
+ * Copyright 2004-2005 Stéphane Dallongeville
+ *
+ * (Modified by NJ)
+ *
+ *****************************************************************************/
 
 #if CZ80_USE_JUMPTABLE
 	goto *JumpTableXY[Opcode];
@@ -110,11 +112,11 @@ switch (Opcode)
 		goto OP_LD_R_imm;
 
 	OPXY(0x26): // LD   HX,#imm
-		data->B.H = FETCH_BYTE;
+		data->B.H = READ_ARG();
 		RET(5)
 
 	OPXY(0x2e): // LD   LX,#imm
-		data->B.L = FETCH_BYTE;
+		data->B.L = READ_ARG();
 		RET(5)
 
 	OPXY(0x0a): // LD   A,(BC)
@@ -142,8 +144,8 @@ switch (Opcode)
 	OPXY(0x66): // LD   H,(IX+o)
 	OPXY(0x6e): // LD   L,(IX+o)
 	OPXY(0x7e): // LD   A,(IX+o)
-		adr = data->W + FETCH_BYTE_S;
-		READ_BYTE(adr, zR8((Opcode >> 3) & 7))
+		adr = data->W + (INT8)READ_ARG();
+		zR8((Opcode >> 3) & 7) = READ_MEM8(adr);
 		RET(15)
 
 	OPXY(0x70): // LD   (IX+o),B
@@ -153,13 +155,13 @@ switch (Opcode)
 	OPXY(0x74): // LD   (IX+o),H
 	OPXY(0x75): // LD   (IX+o),L
 	OPXY(0x77): // LD   (IX+o),A
-		adr = data->W + FETCH_BYTE_S;
-		WRITE_BYTE(adr, zR8(Opcode & 7))
+		adr = data->W + (INT8)READ_ARG();
+		WRITE_MEM8(adr, zR8(Opcode & 7));
 		RET(15)
 
 	OPXY(0x36): // LD   (IX+o),#imm
-		adr = data->W + FETCH_BYTE_S;
-		WRITE_BYTE(adr, FETCH_BYTE)
+		adr = data->W + (INT8)READ_ARG();
+		WRITE_MEM8(adr, READ_ARG());
 		RET(15)
 
 /*-----------------------------------------
@@ -171,7 +173,7 @@ switch (Opcode)
 		goto OP_LOAD_RR_imm16;
 
 	OPXY(0x21): // LD   IX,nn
-		FETCH_WORD(data->W)
+		data->W = READ_ARG16();
 		RET(10)
 
 	OPXY(0x31): // LD   SP,nn
@@ -248,7 +250,7 @@ switch (Opcode)
 		RET(5)
 
 	OPXY(0x34): // INC  (IX+o)
-		adr = data->W + FETCH_BYTE_S;
+		adr = data->W + (INT8)READ_ARG();
 		USE_CYCLES(8)
 		goto OP_INC_m;
 
@@ -274,7 +276,7 @@ switch (Opcode)
 		RET(5)
 
 	OPXY(0x35): // DEC  (IX+o)
-		adr = data->W + FETCH_BYTE_S;
+		adr = data->W + (INT8)READ_ARG();
 		USE_CYCLES(8)
 		goto OP_DEC_m;
 
@@ -303,7 +305,8 @@ switch (Opcode)
 		goto OP_ADD;
 
 	OPXY(0x86): // ADD  A,(IX+o)
-		READ_BYTE(data->W + FETCH_BYTE_S, val)
+		adr = data->W + (INT8)READ_ARG();
+		val = READ_MEM8(adr);
 		USE_CYCLES(11)
 		goto OP_ADD;
 
@@ -332,7 +335,8 @@ switch (Opcode)
 		goto OP_ADC;
 
 	OPXY(0x8e): // ADC  A,(IX+o)
-		READ_BYTE(data->W + FETCH_BYTE_S, val)
+		adr = data->W + (INT8)READ_ARG();
+		val = READ_MEM8(adr);
 		USE_CYCLES(11)
 		goto OP_ADC;
 
@@ -361,7 +365,8 @@ switch (Opcode)
 		goto OP_SUB;
 
 	OPXY(0x96): // SUB  (IX+o)
-		READ_BYTE(data->W + FETCH_BYTE_S, val)
+		adr = data->W + (INT8)READ_ARG();
+		val = READ_MEM8(adr);
 		USE_CYCLES(11)
 		goto OP_SUB;
 
@@ -390,7 +395,8 @@ switch (Opcode)
 		goto OP_SBC;
 
 	OPXY(0x9e): // SBC  A,(IX+o)
-		READ_BYTE(data->W + FETCH_BYTE_S, val)
+		adr = data->W + (INT8)READ_ARG();
+		val = READ_MEM8(adr);
 		USE_CYCLES(11)
 		goto OP_SBC;
 
@@ -419,7 +425,8 @@ switch (Opcode)
 		goto OP_CP;
 
 	OPXY(0xbe): // CP   (IX+o)
-		READ_BYTE(data->W + FETCH_BYTE_S, val)
+		adr = data->W + (INT8)READ_ARG();
+		val = READ_MEM8(adr);
 		USE_CYCLES(11)
 		goto OP_CP;
 
@@ -448,7 +455,8 @@ switch (Opcode)
 		goto OP_AND;
 
 	OPXY(0xa6): // AND  (IX+o)
-		READ_BYTE(data->W + FETCH_BYTE_S, val)
+		adr = data->W + (INT8)READ_ARG();
+		val = READ_MEM8(adr);
 		USE_CYCLES(11)
 		goto OP_AND;
 
@@ -477,7 +485,8 @@ switch (Opcode)
 		goto OP_XOR;
 
 	OPXY(0xae): // XOR  (IX+o)
-		READ_BYTE(data->W + FETCH_BYTE_S, val)
+		adr = data->W + (INT8)READ_ARG();
+		val = READ_MEM8(adr);
 		USE_CYCLES(11)
 		goto OP_XOR;
 
@@ -506,7 +515,8 @@ switch (Opcode)
 		goto OP_OR;
 
 	OPXY(0xb6): // OR   (IX+o)
-		READ_BYTE(data->W + FETCH_BYTE_S, val)
+		adr = data->W + (INT8)READ_ARG();
+		val = READ_MEM8(adr);
 		USE_CYCLES(11)
 		goto OP_OR;
 
@@ -751,11 +761,11 @@ switch (Opcode)
 
 	OPXY(0xcb): // XYCB prefix (BIT & SHIFT INSTRUCTIONS)
 	{
-		u8 src;
-		u8 res;
+		UINT8 src;
+		UINT8 res;
 
-		adr = data->W + FETCH_BYTE_S;
-		Opcode = FETCH_BYTE;
+		adr = data->W + (INT8)READ_ARG();
+		Opcode = READ_ARG();
 #if CZ80_EMULATE_R_EXACTLY
 		zR++;
 #endif
@@ -771,6 +781,6 @@ switch (Opcode)
 	OPXY(0xfd): // FD prefix (IY)
 		goto FD_PREFIX;
 
-#if (CZ80_USE_JUMPTABLE == 0)
+#if !CZ80_USE_JUMPTABLE
 }
 #endif

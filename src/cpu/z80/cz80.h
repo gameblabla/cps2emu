@@ -1,45 +1,46 @@
-/********************************************************************************/
-/*                                                                              */
-/* CZ80 include file                                                            */
-/* C Z80 emulator version 0.1                                                   */
-/* Copyright 2004 StÑéhane Dallongeville                                        */
-/*                                                                              */
-/********************************************************************************/
+/******************************************************************************
+ *
+ * CZ80 (Z80 CPU emulator) version 0.9
+ * Compiled with Dev-C++
+ * Copyright 2004-2005 Stéphane Dallongeville
+ *
+ * (Modified by NJ)
+ *
+ *****************************************************************************/
 
-#ifndef _CZ80_H_
-#define _CZ80_H_
+#ifndef CZ80_H
+#define CZ80_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
 /******************************/
 /* Compiler dependant defines */
 /******************************/
 
-#ifndef u8
-#define u8	unsigned char
+#ifndef UINT8
+#define UINT8	unsigned char
 #endif
 
-#ifndef s8
-#define s8	char
+#ifndef INT8
+#define INT8	char
 #endif
 
-#ifndef u16
-#define u16	unsigned short
+#ifndef UINT16
+#define UINT16	unsigned short
 #endif
 
-#ifndef s16
-#define s16	short
+#ifndef INT16
+#define INT16	short
 #endif
 
-#ifndef u32
-#define u32	unsigned int
+#ifndef UINT32
+#define UINT32	unsigned int
 #endif
 
-#ifndef s32
-#define s32	int
+#ifndef INT32
+#define INT32	int
 #endif
 
 /*************************************/
@@ -54,10 +55,15 @@ extern "C" {
 #define CZ80_LITTLE_ENDIAN		1
 #define CZ80_USE_JUMPTABLE		1
 #define CZ80_BIG_FLAGS_ARRAY	1
+#ifdef BUILD_CPS1PSP
+#define CZ80_ENCRYPTED_ROM		1
+#else
+#define CZ80_ENCRYPTED_ROM		0
+#endif
 #define CZ80_EMULATE_R_EXACTLY	0
 
-#define zR8(A)		(*pzR8[A])
-#define zR16(A)		(pzR16[A]->W)
+#define zR8(A)		(*CPU->pzR8[A])
+#define zR16(A)		(CPU->pzR16[A]->W)
 
 #define pzAF		&(CPU->AF)
 #define zAF			CPU->AF.W
@@ -150,44 +156,62 @@ extern "C" {
 #define CZ80_IFF_SFT	CZ80_PF_SFT
 #define CZ80_IFF		CZ80_PF
 
-#define CZ80_HAS_INT	CZ80_IFF
-#define CZ80_HAS_NMI	0x08
+#ifndef IRQ_LINE_STATE
+#define IRQ_LINE_STATE
+#define CLEAR_LINE		0		/* clear (a fired, held or pulsed) line */
+#define ASSERT_LINE		1		/* assert an interrupt immediately */
+#define HOLD_LINE		2		/* hold interrupt line until acknowledged */
+#define PULSE_LINE		3		/* pulse interrupt line for one instruction */
+#define IRQ_LINE_NMI	127		/* IRQ line for NMIs */
+#endif
 
-#define CZ80_RUNNING	0x10
-#define CZ80_HALTED	 	0x20
-#define CZ80_FAULTED	0x80
-#define CZ80_DISABLE	0x40
-
-
-typedef u8 CZ80_READ8(u32 adr);
-typedef void CZ80_WRITE8(u32 adr, u8 data);
-
-typedef s32 CZ80_INT_CALLBACK(s32 param);
+enum
+{
+	CZ80_PC = 1,
+	CZ80_SP,
+	CZ80_AF,
+	CZ80_BC,
+	CZ80_DE,
+	CZ80_HL,
+	CZ80_IX,
+	CZ80_IY,
+	CZ80_AF2,
+	CZ80_BC2,
+	CZ80_DE2,
+	CZ80_HL2,
+	CZ80_R,
+	CZ80_I,
+	CZ80_IM,
+	CZ80_IFF1,
+	CZ80_IFF2,
+	CZ80_HALT,
+	CZ80_IRQ
+};
 
 typedef union
 {
 	struct
 	{
 #if CZ80_LITTLE_ENDIAN
-		u8 L;
-		u8 H;
+		UINT8 L;
+		UINT8 H;
 #else
-		u8 H;
-		u8 L;
+		UINT8 H;
+		UINT8 L;
 #endif
 	} B;
-	u16 W;
+	UINT16 W;
 } union16;
 
-typedef struct
+typedef struct cz80_t
 {
 	union
 	{
-		u8 r8[8];
+		UINT8 r8[8];
 		union16 r16[4];
 		struct
 		{
-			union16 BC;		 // 32 bytes aligned
+			union16 BC;
 			union16 DE;
 			union16 HL;
 			union16 AF;
@@ -197,7 +221,7 @@ typedef struct
 	union16 IX;
 	union16 IY;
 	union16 SP;
-	u32	 PC;
+	UINT32 PC;
 
 	union16 BC2;
 	union16 DE2;
@@ -207,22 +231,34 @@ typedef struct
 	union16 R;
 	union16 IFF;
 
-	u8 I;
-	u8 IM;
-	u8 IRQState;
-	u8 HaltState;
+	UINT8 I;
+	UINT8 IM;
+	UINT8 HaltState;
+	UINT8 dummy;
 
-	u32 BasePC;
+	INT32 IRQLine;
+	INT32 IRQState;
+	INT32 ICount;
+	INT32 ExtraCycles;
 
-	CZ80_READ8 *Read_Byte;
-	CZ80_WRITE8 *Write_Byte;
+	UINT32 BasePC;
+	UINT32 Fetch[CZ80_FETCH_BANK];
+#if CZ80_ENCRYPTED_ROM
+	INT32 OPBase;
+	INT32 OPFetch[CZ80_FETCH_BANK];
+#endif
 
-	CZ80_READ8 *IN_Port;
-	CZ80_WRITE8 *OUT_Port;
+	UINT8 *pzR8[8];
+	union16 *pzR16[4];
 
-	CZ80_INT_CALLBACK *Interrupt_Ack;
+	UINT8   (*Read_Byte)(UINT32 address);
+	void (*Write_Byte)(UINT32 address, UINT8 data);
 
-	u8 *Fetch[CZ80_FETCH_BANK];
+	UINT8   (*IN_Port)(UINT16 port);
+	void (*OUT_Port)(UINT16 port, UINT8 value);
+
+	INT32  (*Interrupt_Callback)(INT32 irqline);
+
 } cz80_struc;
 
 
@@ -231,37 +267,37 @@ typedef struct
 /*************************/
 
 extern cz80_struc CZ80;
-extern int z80_ICount;
 
 /*************************/
 /* Publics Z80 functions */
 /*************************/
 
-void Cz80_Init(cz80_struc *cpu);
-void Cz80_Reset(cz80_struc *cpu);
+void Cz80_Init(cz80_struc *CPU);
 
-void Cz80_Set_Fetch(cz80_struc *cpu, u32 low_adr, u32 high_adr, u32 fetch_adr);
+void Cz80_Reset(cz80_struc *CPU);
 
-void Cz80_Set_ReadB(cz80_struc *cpu, CZ80_READ8 *Func);
-void Cz80_Set_WriteB(cz80_struc *cpu, CZ80_WRITE8 *Func);
+INT32  Cz80_Exec(cz80_struc *CPU, INT32 cycles);
 
-void Cz80_Set_INPort(cz80_struc *cpu, CZ80_READ8 *Func);
-void Cz80_Set_OUTPort(cz80_struc *cpu, CZ80_WRITE8 *Func);
+void Cz80_Set_IRQ(cz80_struc *CPU, INT32 line, INT32 state);
 
-void Cz80_Set_IRQ_Callback(cz80_struc *cpu, CZ80_INT_CALLBACK *Func);
+UINT32  Cz80_Get_Reg(cz80_struc *CPU, INT32 regnum);
+void Cz80_Set_Reg(cz80_struc *CPU, INT32 regnum, UINT32 value);
 
-s32  Cz80_Exec(cz80_struc *cpu, s32 cycles);
+void Cz80_Set_Fetch(cz80_struc *CPU, UINT32 low_adr, UINT32 high_adr, UINT32 fetch_adr);
+#if CZ80_ENCRYPTED_ROM
+void Cz80_Set_Encrypt_Range(cz80_struc *CPU, UINT32 low_adr, UINT32 high_adr, UINT32 decrypted_rom);
+#endif
 
-void Cz80_Set_IRQ(cz80_struc *cpu, s32 vector);
-void Cz80_Set_NMI(cz80_struc *cpu);
-void Cz80_Clear_IRQ(cz80_struc *cpu);
+void Cz80_Set_ReadB(cz80_struc *CPU, UINT8 (*Func)(UINT32 address));
+void Cz80_Set_WriteB(cz80_struc *CPU, void (*Func)(UINT32 address, UINT8 data));
 
-u32  Cz80_Get_PC(cz80_struc *cpu);
-void Cz80_Set_PC(cz80_struc *cpu, u32 value);
+void Cz80_Set_INPort(cz80_struc *CPU, UINT8 (*Func)(UINT16 port));
+void Cz80_Set_OUTPort(cz80_struc *CPU, void (*Func)(UINT16 port, UINT8 value));
+
+void Cz80_Set_IRQ_Callback(cz80_struc *CPU, INT32 (*Func)(INT32 irqline));
 
 #ifdef __cplusplus
 };
 #endif
 
-#endif  // _CZ80_H_
-
+#endif	/* CZ80_H */
